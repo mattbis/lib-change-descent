@@ -18,3 +18,6 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] max limits
 - [ ] session aware
 - [ ] consistent error messages with code and standard `[THING]`
+- [ ] shared buffer from host and protocol finish... smt is not right here... probably need to get smt working to revise it
+
+- [ ] 3 revision for alpha?
