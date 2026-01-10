@@ -18,3 +18,4 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] max limits
 - [ ] session aware
 - [ ] consistent error messages with code and standard `[THING]`
+- [ ] performance metrics .. hmmmm 
