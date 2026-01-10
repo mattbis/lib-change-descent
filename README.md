@@ -1,7 +1,15 @@
-# lib-change-descent dot WIP
+# lib-change-descent
 
 The first part of how lkman is gonna work... 
 
-## TODO
+## WIP
 
-- Matt: Make this usable for Node and Rust... hmmmmmmmmmmmm - actually a second library repo and rust will have almost all of this already in teh standard library.... 
+- [ ] think more about suggested byte ranges and sizes
+- [ ] debug and dev/alpha consistency checks
+- [ ] core descent logic
+- [ ] offset test and playing
+- [ ] confirm node size
+- [ ] confirm views
+- [ ] page sizes 
+- [ ] text storage sizes
+- [ ] max limits
