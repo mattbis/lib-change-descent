@@ -1,5 +1,5 @@
 // TODO(matt): more drafts : since some of this I need to confirm I really understand....
-function _runFullBufferIntegrityCheck() {
+export function _runFullBufferIntegrityCheck() {
     const stride = 32
     const CANARY_VAL = 0xAA
     const CANARY_OFFSET = 31 // Last byte of the stride
