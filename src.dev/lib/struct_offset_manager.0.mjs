@@ -8,7 +8,7 @@
  * 24: Size (Float64)
  */
 
-const NODE_STRIDE = 32; // Bytes per node
+export const NODE_STRIDE = 32; // Bytes per node
 
 export const createNodeAccessor = (buffer) => {
     const u8 = new Uint8Array(buffer)
