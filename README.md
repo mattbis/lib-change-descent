@@ -4,6 +4,8 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 
 ## WIP
 
+- [ ] Typescript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy
+
 - [ ] get second and third opinions on the current arch and suggested structure
 - [ ] think more about suggested byte ranges and sizes : research
 - [ ] debug and dev/alpha consistency checks
@@ -11,6 +13,6 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] offset test and playing
 - [ ] confirm node size
 - [ ] confirm views
-- [ ] page sizes 
+- [ ] page sizes
 - [ ] text storage sizes
 - [ ] max limits
