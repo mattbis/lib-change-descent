@@ -61,3 +61,9 @@ export const create_node_accessor = (buffer) => {
         has_flag: (id, flag) => (u8_view[id * NODE_STRIDE] & flag) !== 0
     }
 }
+
+export const getAccessorForNode = (nodeId, pages) => {
+    const pageIdx = nodeId >> 16
+    const offset = nodeId & 0xFFFF
+    //return create_node_accessor(pages[pageIdx]).at(offset)
+}
