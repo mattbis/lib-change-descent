@@ -16,3 +16,4 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] page sizes
 - [ ] text storage sizes
 - [ ] max limits
+- [ ] session aware... it should not matter... 
