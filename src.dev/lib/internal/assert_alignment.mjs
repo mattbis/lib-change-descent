@@ -1,14 +1,14 @@
 /**
- * @param {number} nodeId - The ID of the node being accessed
+ * @param {number} node_id - The ID of the node being accessed
  * @param {number} offset - The byte offset within that node (e.g., 16 for mtime)
- * @param {number} byteSize - The size of the type (e.g., 8 for Float64)
+ * @param {number} byte_size - The size of the type (e.g., 8 for Float64)
  */
-export function assertAlignment(nodeId, offset, byteSize) {
-  const absoluteAddress = (nodeId * 32) + offset;
-  if (absoluteAddress % byteSize !== 0) {
+export function assert_alignment(node_id, offset, byte_size) {
+  const absolute_address = (node_id * 32) + offset;
+  if (absolute_address % byte_size !== 0) {
     throw new Error(
-      `ALIGNMENT_ERROR: Node ${nodeId} at offset ${offset} is not ${byteSize}-byte aligned. ` +
-      `Address ${absoluteAddress} is not divisible by ${byteSize}.`
+      `ALIGNMENT_ERROR: Node ${node_id} at offset ${offset} is not ${byte_size}-byte aligned. ` +
+      `Address ${absolute_address} is not divisible by ${byte_size}.`
     )
   }
 }
