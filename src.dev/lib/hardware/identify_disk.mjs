@@ -1,10 +1,13 @@
+import { get_disk_fingerprint } from '../os/win/get_disk_fingerprint.mjs'
+import { db } from '../db/sqllite/db.mjs'
+
 /**
  * #noqa 
  * @param {string} volume_path
  */
 async function identify_disk(volume_path) {
     const uuid = await get_disk_fingerprint(volume_path) // Platform specific (wmic/lsblk)
-    
+
     const known_config = db.prepare('SELECT type FROM disk_configs WHERE uuid = ?').get(uuid)
 
     if (!known_config) {
