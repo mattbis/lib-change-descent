@@ -1,6 +1,12 @@
 export const HEADER_SIZE= 64
 export const MAGIC= "LKMAN001"
 
+/**
+ * 
+ * @param {number} node_count 
+ * @param {number} heap_size 
+ * @returns 
+ */
 export function create_session_header(node_count, heap_size) {
     const buffer= new ArrayBuffer(HEADER_SIZE)
     const view= new DataView(buffer)
@@ -22,11 +28,15 @@ export function create_session_header(node_count, heap_size) {
     return new Uint8Array(buffer)
 }
 
+/**
+ * @param {Uint8Array} header_buffer 
+ * @returns {Object} 
+ */
 export function validate_header(header_buffer) {
     const view= new DataView(header_buffer.buffer)
     const decoder= new TextDecoder()
     
-    // Check Magic
+    // Check Magic is correct and no corruption happened
     const magic= decoder.decode(new Uint8Array(header_buffer.buffer, 0, 8))
     if (magic !== MAGIC) {
         throw new Error("INVALID_SESSION_FILE: Magic bytes mismatch")

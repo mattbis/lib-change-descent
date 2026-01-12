@@ -27,6 +27,7 @@
 export const NODE_STRIDE = 32; // Bytes per node
 
 export const create_node_accessor = (buffer) => {
+    
     const u8_view= new Uint8Array(buffer)
     const i32_view= new Int32Array(buffer)
     const f64_view= new Float64Array(buffer)
