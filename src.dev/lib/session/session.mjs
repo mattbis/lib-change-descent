@@ -1,6 +1,10 @@
 export const HEADER_SIZE= 64
 export const MAGIC= "LKMAN001"
 
+/*
+ * sessions allow abnormal terminations and fast resuming of sessions... they ensure we can restore
+ */
+
 /**
  * 
  * @param {number} node_count 

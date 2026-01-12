@@ -21,3 +21,4 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] shared buffer from host and protocol finish... smt is not right here... probably need to get smt working to revise it
 - [ ] 3 revision for alpha?
 - [ ] performance metrics
+- [ ] allow ctors and main as different ways to consume and provide data to the application

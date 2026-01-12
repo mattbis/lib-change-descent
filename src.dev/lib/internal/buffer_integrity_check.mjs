@@ -1,5 +1,9 @@
-// TODO(matt): more drafts : since some of this I need to confirm I really understand....
-export function _run_full_buffer_integrity_check() {
+/**
+ * perform checks as part of invariants in dev and alpha builds, to ensure I didnt make a mistake !
+ * otherwise data will be corrupted..
+ * @param {Object} buffer
+ */
+export function _run_full_buffer_integrity_check(buffer) {
     const stride= 32
     const CANARY_VAL= 0xAA
     const CANARY_OFFSET= 31 // Last byte of the stride
