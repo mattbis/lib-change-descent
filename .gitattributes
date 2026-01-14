@@ -1,0 +1,6 @@
+# Enforce CRLF on Windows
+* text=auto eol=crlf
+
+# Node build artifacts
+dist/ export-ignore
+node_modules/ export-ignore

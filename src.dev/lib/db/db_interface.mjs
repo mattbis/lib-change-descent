@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 export const db_interface= {
     connect: () => {},
     disconnect: () => {},
