@@ -1,8 +1,8 @@
 // if process.NODE_ENV !== 'production'
-export const MAX_STRING_HEAP_SEARCH = 4096
+export const MAX_STRING_HEAP_SEARCH= 4096
 
 export function verify_string_heap(buffer, string_heap, node_cursor) {
-    const decoder = new TextDecoder()
+    const decoder= new TextDecoder()
     const stride= 32
     const i32= new Int32Array(buffer)
     const u8_heap= new Uint8Array(string_heap)
