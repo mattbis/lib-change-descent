@@ -1,5 +1,21 @@
 {
+  "name": "lib-change-descent", 
+  "version": "0.0.1",
+  "description": "",
+  "author": "mattbis",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/mattbis/lib-change-descent",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mattbis/lib-change-descent.git"
+  },
+  "type": "module",
+  "private": true,
   "dependencies": {
     "@huggingface/blake3-wasm": "^0.0.2"
+  },
+  "scripts": {
+    "build": "",
+    "start": ""
   }
 }
