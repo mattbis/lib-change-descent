@@ -1,8 +1,8 @@
 // if process.NODE_ENV !== 'production'
-
-const decoder = new TextDecoder()
+export const MAX_STRING_HEAP_SEARCH = 4096
 
 export function verify_string_heap(buffer, string_heap, node_cursor) {
+    const decoder = new TextDecoder()
     const stride= 32
     const i32= new Int32Array(buffer)
     const u8_heap= new Uint8Array(string_heap)
@@ -21,7 +21,7 @@ export function verify_string_heap(buffer, string_heap, node_cursor) {
         // We look ahead to ensure the string eventually ends
         let foundNull= false
         let length= 0
-        const max_search= 4096 // Paths shouldn't really be longer than this
+        const max_search= MAX_STRING_HEAP_SEARCH // Paths shouldn't really be longer than this
 
         for (let j= name_ptr; j < name_ptr + max_search && j < heap_size; j++) {
             if (u8_heap[j] === 0) {
