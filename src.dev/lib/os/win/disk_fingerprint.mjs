@@ -12,7 +12,7 @@ export function get_disk_fingerprint(drive_letter) {
     const output= execSync(`wmic volume where "driveletter='${drive_letter}'" get DeviceID, VolumeSerialNumber`).toString()
     
     // TODO(matt): check its valid disk identifier in the windows schema to know the parsing worked properly
-    const lines = output.trim().split('\n')
+    const lines= output.trim().split('\n')
     if (lines.length > 1) {
         const parts= lines[1].trim().split(/\s+/)
         return parts[parts.length - 1]
