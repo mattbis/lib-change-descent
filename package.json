@@ -1,5 +1,5 @@
 {
-  "name": "lib-change-descent", 
+  "name": "lib-change-descent",
   "version": "0.0.1",
   "description": "",
   "author": "mattbis",
@@ -17,5 +17,8 @@
   "scripts": {
     "build": "",
     "start": ""
+  },
+  "devDependencies": {
+    "ink": "^6.6.0"
   }
 }
