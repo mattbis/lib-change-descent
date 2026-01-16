@@ -9,6 +9,9 @@ export const STORAGE_IO_PRIORTY= {
   BG: 1
 }
 
+export function stor_record() {
+}
+
 export function stor_write() {
 }
 
