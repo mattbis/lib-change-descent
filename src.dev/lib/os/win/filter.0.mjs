@@ -1,0 +1,1 @@
+export WIN_FILTERS = {}
