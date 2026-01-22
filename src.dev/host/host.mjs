@@ -3,14 +3,14 @@
 // TODO (matt): this should call subroutine for each major os line: nix, win, osx
 export function host_fingerprint() {
     const fingerprint= {
-      
     }
     return fingerprint= {}
 }
 
 /** return a load float of system load */
-export function host_metric_load() /* :flot */ {
-    
+export function host_metric(metric) /* :flot */ {
+    // for queues overall ? ==> silly
+    // for queues each controller? as array or collection [{controller_id:[]}, ..]
 }
 
 /** return object containing:-
