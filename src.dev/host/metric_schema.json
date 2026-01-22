@@ -1,0 +1,26 @@
+{
+  "$id": "https://lkman.io/schemas/history.json",
+  "type": "object",
+  "properties": {
+    "interval": { "type": "integer", "minimum": 1000 },
+    "snapshots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timestamp", "metrics"],
+        "properties": {
+          "timestamp": { "type": "integer" },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "load": { "type": "number" },
+              "memory_used_pct": { "type": "number", "maximum": 100 },
+              "disk_queue": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "required": ["snapshots"]
+}
