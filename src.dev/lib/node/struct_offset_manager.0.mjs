@@ -11,9 +11,9 @@
  * @property {function(number, number): void} add_flag
  * @property {function(number, number): boolean} has_flag
  */
-export const NODE_STRIDE = 32; // Bytes per node
+export const NODE_STRIDE= 32; // Bytes per node
 
-export const create_node_accessor = (buffer) => {
+export const create_node_accessor= (buffer) => {
     
     const u8_view= new Uint8Array(buffer)
     const i32_view= new Int32Array(buffer)
@@ -58,8 +58,8 @@ export const create_node_accessor = (buffer) => {
     }
 }
 
-export const getAccessorForNode = (nodeId, pages) => {
-    const pageIdx = nodeId >> 16
-    const offset = nodeId & 0xFFFF
+export const getAccessorForNode= (nodeId, pages) => {
+    const pageIdx= nodeId >> 16
+    const offset= nodeId & 0xFFFF
     return create_node_accessor(pages[pageIdx])//.at(offset)
 }
