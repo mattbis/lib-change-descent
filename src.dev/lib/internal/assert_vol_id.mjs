@@ -1,0 +1,3 @@
+export function disk_vol_id() {}
+
+/// some os and disk controllers will conflict via teh same manufacturer id.. which means together with connection problems someting mad happens...
