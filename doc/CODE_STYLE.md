@@ -1,0 +1,3 @@
+- prefer `var x= true`
+- prefer no semicolons - they are totally stupid and due to the transition from B to C... much more is legal than you would think
+- 2 spaces is a node JS disease, it makes code too dense, 4 spaces....
