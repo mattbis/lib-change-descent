@@ -7,6 +7,8 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] Typescript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy
 - [ ] research phase more prior art
 
+- [ ] define tasks and the object shape... 
+
 - [ ] get second and third opinions on the current arch and suggested structure
 - [ ] debug and dev/alpha consistency checks
 - [ ] core descent logic
