@@ -1,21 +1,27 @@
 /* define implentation of sqllite driver */
 export const sqlite_driver= {
     connect: () => {
-        return true
+        const o= {}
+        return o
     },
     disconnect: () => {
-        return true
+        const o= {}
+        return o
     },
     prepare: (sql) => {
-        return true
+        const o= {} 
+        return o
     },
     run: () => {
-        return true
+        const o= {} 
+        return o
     },
     get: () => {
-        return true
+        const o= {} 
+        return o
     },
     all: () => {
-        return true
+        const o= {} 
+        return o
     }
 }
