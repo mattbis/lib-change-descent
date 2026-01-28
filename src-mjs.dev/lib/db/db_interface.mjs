@@ -1,7 +1,7 @@
 /**
- * 
+ * db_interface object shape
  */
-export const db_interface= {
+export const db_abstract_interface= {
     connect: () => {},
     disconnect: () => {},
     prepare: () => {},
