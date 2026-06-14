@@ -6,17 +6,23 @@
 export const HEADER_SIZE= 64
 export const MAGIC= "LKMAN001"
 
+// export const OP= {
+//     BG: 0,
+//     FG: 1,
+//     IDLE: 2
+// }
+
 /*
  * sessions allow abnormal terminations and fast resuming of sessions... they ensure we can restore
  */
 
 /**
- * 
+ * creates a session " view " - preallocate 
  * @param {number} node_count 
  * @param {number} heap_size 
  * @returns 
  */
-export function create_session_header(node_count, heap_size) {
+export function session_header_create(node_count, heap_size) {
     const buffer= new ArrayBuffer(HEADER_SIZE)
     const view= new DataView(buffer)
     const encoder= new TextEncoder()
@@ -38,10 +44,11 @@ export function create_session_header(node_count, heap_size) {
 }
 
 /**
+ * validates the session was correctly written since something odd didn't happen with teh process
  * @param {Uint8Array} header_buffer 
  * @returns {Object} 
  */
-export function validate_header(header_buffer) {
+export function session_header_validate(header_buffer) {
     const view= new DataView(header_buffer.buffer)
     const decoder= new TextDecoder()
     
