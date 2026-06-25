@@ -8,7 +8,8 @@ export class LibChangeDescentBare {
     }    
 }
 
-export class LibChangeDescentOp {
+/** the one time DRY might not be sensible - since it would be quite expensive to extend.. however for now */
+export class LibChangeDescentOp extends LibChangeDescentBare {
     constructor(options) {
     }
 }
