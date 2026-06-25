@@ -4,14 +4,13 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 
 ## CONSTRAINTS
 
-- [ ] only ever load and execute the very minimum required for the operation, no enterprise style bloat..
+- [ ] only ever load and execute the very minimum required for the operation, no enterprise style bloat.. ctors, runtime, scope, constants, handles
+- [ ] define tasks and the object shape...
 
 ## WIP
 
-- [ ] Typescript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy
-- [ ] research phase more prior art
-
-- [ ] define tasks and the object shape... 
+- [ ] ~~Typescript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy~~
+- [ ] research phase more prior art or hack 
 
 - [ ] get second and third opinions on the current arch and suggested structure
 - [ ] debug and dev/alpha consistency checks
@@ -25,4 +24,3 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] shared buffer from host and protocol finish... smt is not right here... probably need to get smt working to revise it
 - [ ] 3 revision for alpha?
 - [ ] performance metrics
-- [ ] allow ctors and main as different ways to consume and provide data to the application
