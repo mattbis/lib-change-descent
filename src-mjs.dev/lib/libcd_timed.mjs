@@ -3,7 +3,7 @@ import { hrtime } from 'node:process'
 import { performance } from 'node:perf_hooks'
 
 /**
- * call a function and time it
+ * @param {Function} fn
  */
 export function timed(fn) {
     const start= hrtime()
