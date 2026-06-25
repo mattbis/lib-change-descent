@@ -18,7 +18,7 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] offset test and playing
 - [ ] page sizes (node size)
 - [ ] text storage sizes
-- [ ] max limits (views, node count, heap size)
+- [ ] max limits (views, node count, heap size) - would require aging hash probably or some kinda background clear of cache data, for the core operation - this might grow quite big - depending on the number of volumes. ( this is part of profiles mod +unlimited )
 - [ ] session
 - [ ] consistent error messages with code and standard `[THING]`
 - [ ] shared buffer from host and protocol finish... smt is not right here... probably need to get smt working to revise it
