@@ -2,6 +2,10 @@
 
 The first part of how lkman is gonna work...  This probably exists elsewhere much better.
 
+## CONSTRAINTS
+
+- [ ] only ever load and execute the very minimum required for the operation, no enterprise style bloat..
+
 ## WIP
 
 - [ ] Typescript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy
