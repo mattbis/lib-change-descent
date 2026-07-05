@@ -10,11 +10,9 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 ## WIP
 
 - [ ] ~~Typescript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy~~
-- [ ] research phase more prior art or hack 
-
-- [ ] get second and third opinions on the current arch and suggested structure
 - [ ] debug and dev/alpha consistency checks
-- [ ] core descent logic
+- [ ] motion types and strategies
+- [ ] os stuff
 - [ ] offset test and playing
 - [ ] page sizes (node size)
 - [ ] text storage sizes
