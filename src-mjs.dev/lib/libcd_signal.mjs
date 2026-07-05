@@ -8,3 +8,5 @@ export const SIG_STATE = {
   RUN: 1,
   PROCESS: 2
 }
+export function receive() {}
+export function signal() {}
