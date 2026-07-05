@@ -21,4 +21,5 @@ The first part of how lkman is gonna work...  This probably exists elsewhere muc
 - [ ] consistent error messages with code and standard `[THING]`
 - [ ] shared buffer from host and protocol finish... smt is not right here... probably need to get smt working to revise it
 - [ ] 3 revision for alpha?
-- [ ] performance metrics
+
+performance isn't important - just that this allows integration with other systems and is aimed for function over filesystem
