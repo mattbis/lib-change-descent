@@ -3,9 +3,6 @@
  * lib-change-descent is session orientated due to the nature of users and the os
  */
 
-export const HEADER_SIZE= 64
-export const MAGIC= "LKMAN001"
-
 // export const OP= {
 //     BG: 0,
 //     FG: 1,
