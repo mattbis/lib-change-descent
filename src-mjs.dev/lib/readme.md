@@ -1,0 +1,3 @@
+# libcd_lib
+
+1. no construct can assume the thign is what it says it as.. teh motherboard, or the controllers, can report it as an ssd when its a hdd,, YES this is a thing...  
