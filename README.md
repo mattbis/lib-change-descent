@@ -21,16 +21,10 @@ When looking up a node by name, do not decode the node's `NamePointer` to a stri
 ## WIP
 
 - [ ] ~~TypeScript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy~~
-- [ ] debug and dev/alpha consistency checks
-- [ ] motion types and strategies
-- [ ] os stuff
-- [ ] offset test and playing
-- [ ] page sizes (node size)
-- [ ] text storage sizes
-- [ ] max limits (views, node count, heap size) - would require aging hash probably or some kinda background clear of cache data, for the core operation - this might grow quite big - depending on the number of volumes. ( this is part of profiles mod +unlimited )
-- [ ] session
-- [ ] consistent error messages with code and standard `[THING]`
-- [ ] shared buffer from host and protocol finish... something is not right here... probably need to get something working to revise it
-- [ ] 3 revision for alpha?
+- [ ] memory layout & bounds: node stride, text storage sizes, and offset testing
+- [ ] scale limits: max views, node count, and heap size (needs cache aging/clearing for massive multi-volume profiles to prevent heap blowouts)
+- [ ] os interop & concurrency: os filters and resolving the shared buffer host protocol (needs a working prototype to revise)
+- [ ] engine core: motion types, strategies, and session management
+- [ ] diagnostics & release: dev/alpha consistency checks, standardized error codes `[THING]`, targeting 3 revisions for alpha
 
 performance isn't important - just that this allows integration with other systems and is aimed for function over filesystem
