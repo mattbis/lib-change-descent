@@ -42,6 +42,12 @@ export class Volume {
             // TODO (matt): log pollution, too many of same type.. windows, does a ton of event logging, and its burning cpu
         ]
     }
+    
+    // TODO: (matt): lib_cd.volume.imprint -- creates a user space marker of the disk id... that doesn't trip external virus detection for no good reasons... 
+    imprint() {}
+    /// in many arguments you could say just disable the virus scanner,, if you know what you are doing.. and you have this many disks I can assume a certain
+    /// savvyness... 
+    
     set(type) {}
     // get 
     constructor() {}
