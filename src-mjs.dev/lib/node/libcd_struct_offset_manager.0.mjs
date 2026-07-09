@@ -22,26 +22,26 @@ export const create_node_accessor= (buffer) => {
     return {
         // ---- Getters ---- 
         /** @type {NodeAccessor['get_flags']} */
-        get_flags: (id) => u8_view[id * NODE_STRIDE],
+        get_flags: (id) => Atomics.load(u8_view, id * NODE_STRIDE),
         
         /** @type {NodeAccessor['get_parent']} */
-        get_parent: (id) => i32_view[(id * NODE_STRIDE + 4) / 4],
+        get_parent: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 4) / 4),
         
         /** @type {NodeAccessor['get_name_ptr']} */
-        get_name_ptr: (id) => i32_view[(id * NODE_STRIDE + 8) / 4],
+        get_name_ptr: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 8) / 4),
         
         /** @type {NodeAccessor['get_m_time']} */
-        get_m_time: (id) => f64_view[(id * NODE_STRIDE + 16) / 8],
+        get_m_time: (id) => f64_view[(id * NODE_STRIDE + 16) / 8], // Atomics don't support Float64
 
         // ---- Setters ---- 
         /** @type {NodeAccessor['set_flags']} */
-        set_flags: (id, val) => { u8_view[id * NODE_STRIDE] = val; },
+        set_flags: (id, val) => { Atomics.store(u8_view, id * NODE_STRIDE, val); },
         
         /** @type {NodeAccessor['set_parent']} */
-        set_parent: (id, val) => { i32_view[(id * NODE_STRIDE + 4) / 4] = val; },
+        set_parent: (id, val) => { Atomics.store(i32_view, (id * NODE_STRIDE + 4) / 4, val); },
         
         /** @type {NodeAccessor['set_name_ptr']} */
-        set_name_ptr: (id, val) => { i32_view[(id * NODE_STRIDE + 8) / 4] = val; },
+        set_name_ptr: (id, val) => { Atomics.store(i32_view, (id * NODE_STRIDE + 8) / 4, val); },
         
         /** @type {NodeAccessor['set_m_time']} */
         set_m_time: (id, val) => { f64_view[(id * NODE_STRIDE + 16) / 8] = val; },
@@ -51,10 +51,10 @@ export const create_node_accessor= (buffer) => {
 
         // ---- Bitwise Helpers ---- 
         /** @type {NodeAccessor['add_flag']} */
-        add_flag: (id, flag) => { u8_view[id * NODE_STRIDE] |= flag; },
+        add_flag: (id, flag) => { Atomics.or(u8_view, id * NODE_STRIDE, flag); },
         
         /** @type {NodeAccessor['has_flag']} */
-        has_flag: (id, flag) => (u8_view[id * NODE_STRIDE] & flag) !== 0
+        has_flag: (id, flag) => (Atomics.load(u8_view, id * NODE_STRIDE) & flag) !== 0
     }
 }
 
