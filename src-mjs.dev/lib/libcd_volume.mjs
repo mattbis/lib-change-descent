@@ -20,18 +20,26 @@
  */
 export const LIBCD_VOL_DISCOVER_STRATEGY = {
     // one by one
-    sequential: {},
+    sequential: {
+        next: (index, count) = {}
+    },
     // groups of queries - in ordered procession
-    staggered: {},
+    staggered: {
+        next: (index, count) = {}
+    },
     // random sample - of possible total
-    random_sample: {}
+    random_sample: {
+        next: (index, count) = {}
+    }
 }
 
 export const LIBCD_VOL_TYPE= {
   // fixed, / mark as ...                   // cannot be fixed and removable
   // removable, / mark as volatile          // can be removable and temporary
-  // temporary / mark as less important     // can be fixed or removable
+  // temporary / mark as less important     // can be fixed or removable - no speed restrictions
 }
+
+// TODO (matt): as mentioned elsewhere the activity mods... 
 
 export class LIBCD_VOL {
     d= {
