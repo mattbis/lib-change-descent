@@ -26,3 +26,23 @@ export const VOL_DISCOVER_STRATEGIES = {
     // random sample - of possible total
     random_sample: {}
 }
+
+export class Volume {
+    d= {
+        type_log: [],
+        identifiers: [], // I almost feel like this object is recreated and static.identifiers is all known os dependent volume path / drive identifiers seen
+        // which is then a metric that can be seen or used... here there is a problem OS are stupid... windows can arbitarirly change driver letters in certain
+        // scenarios......
+
+        /// TODO (matt): we need an intelligence, that knows whats not been changed for sometime, and uses this as a internal fingerprint of what disk is likely
+        // however, if the user changes teh contents of a disk a lot .... its very hard to infer....
+
+        acl_log: [
+            // stores when something raised an exception that bubbled up and made an operation hang... or succeed... 
+            // TODO (matt): log pollution, too many of same type.. windows, does a ton of event logging, and its burning cpu
+        ]
+    }
+    set(type) {}
+    // get 
+    constructor() {}
+}
