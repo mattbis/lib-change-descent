@@ -24,6 +24,7 @@ performance isn't important - just that this allows integration with other syste
 # PHASE 2
 
 - schema generation on use case, its static, but still architecture phase ( 1 )
+- fixed limit custom byte size 
 
 ## STRING HEAP MITIGATION
 
