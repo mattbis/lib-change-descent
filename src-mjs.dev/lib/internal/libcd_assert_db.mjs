@@ -5,5 +5,5 @@
 /// assert the db source file... exists
 export function assert_db_file() {}
 
-/// check teh 
+/// check the 
 export function assert_db_connection() {}

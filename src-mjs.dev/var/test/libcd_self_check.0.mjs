@@ -1,2 +1,2 @@
-import { invariant } from "../../internal/invariant.mjs";
+import { invariant } from "../../lib/internal/libcd_invariant.mjs";
 

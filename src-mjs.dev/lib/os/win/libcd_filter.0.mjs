@@ -1,1 +1,1 @@
-export WIN_FILTERS = {}
+export const WIN_FILTERS = {}

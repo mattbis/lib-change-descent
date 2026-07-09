@@ -9,7 +9,7 @@ import {}
  * these are configured via the main session and configure 
  */
 
-export const STORAGE_IO_PRIORTY= {
+export const STORAGE_IO_PRIORITY= {
   FG: 0,
   BG: 1
 }

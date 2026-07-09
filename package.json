@@ -15,10 +15,10 @@
     "@huggingface/blake3-wasm": "^0.0.2"
   },
   "scripts": {
-    "test": "node --test src.dev/var/test/",
-    "lint": "eslint src.dev",
+    "test": "node --test src-mjs.dev/var/test/libcd_self_check.0.mjs",
+    "lint": "eslint src-mjs.dev",
     "format": "prettier --write .",
-    "dev": "node --watch src.dev/main/main.mjs"
+    "dev": "node --watch src-mjs.dev/main/main.mjs"
   },
   "devDependencies": {
     "ink": "^6.6.0"

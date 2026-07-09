@@ -1,5 +1,5 @@
-/* define implentation of sqllite driver */
-export const sqlite_driver= {
+/* define implementation of PostgreSQL driver */
+export const pg_driver= {
     connect: () => {
         const o= {}
         return o

@@ -41,7 +41,7 @@ export function session_header_create(node_count, heap_size) {
 }
 
 /**
- * validates the session was correctly written since something odd didn't happen with teh process
+ * validates the session was correctly written since something odd didn't happen with the process
  * @param {Uint8Array} header_buffer 
  * @returns {Object} 
  */

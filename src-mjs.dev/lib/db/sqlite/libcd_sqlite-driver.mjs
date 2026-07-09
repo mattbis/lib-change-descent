@@ -1,4 +1,4 @@
-/* define implentation of sqllite driver */
+/* define implementation of SQLite driver */
 export const sqlite_driver= {
     connect: () => {
         const o= {}

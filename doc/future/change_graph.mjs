@@ -1,1 +1,1 @@
-/** allows rendering a change bitmap graph based on the params to the volmap */
+/** allows rendering a change bitmap graph based on the parameters to the volume map */
