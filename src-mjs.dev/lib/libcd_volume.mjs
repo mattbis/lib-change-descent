@@ -18,7 +18,7 @@
  * batshit insane OS is doing... the less we can do... if it's HDD for example.. as that means head seeking and scratching... we don't want that
  * ever.
  */
-export const VOL_DISCOVER_STRATEGIES = {
+export const LIBCD_VOL_DISCOVER_STRATEGY = {
     // one by one
     sequential: {},
     // groups of queries - in ordered procession
@@ -27,9 +27,15 @@ export const VOL_DISCOVER_STRATEGIES = {
     random_sample: {}
 }
 
-export class Volume {
+export const LIBCD_VOL_TYPE= {
+  // fixed, / mark as ...                   // cannot be fixed and removable
+  // removable, / mark as volatile          // can be removable and temporary
+  // temporary / mark as less important     // can be fixed or removable
+}
+
+export class LIBCD_VOL {
     d= {
-        type_log: [],
+        type_log: [], // as LIBCD_VOL_TYPE
         identifiers: [], // I almost feel like this object is recreated and static.identifiers is all known os dependent volume path / drive identifiers seen
         // which is then a metric that can be seen or used... here there is a problem OS are stupid... windows can arbitarirly change driver letters in certain
         // scenarios......
