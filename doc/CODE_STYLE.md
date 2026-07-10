@@ -6,4 +6,4 @@
 - ### dep parties
 - `1p` this means node js core or whatever language core
 - `2p` means libraries and code i wrote, that this will use
-- `3p` means someone elses code, in this library its based off of their code, but i really don't want any deps
+- `3p` means someone elses code, in this library its based off of their code, but i really don't want any deps; and so far I am mostly just imagining my own approach for fun, improvement and I need to use it daily... 
