@@ -1,2 +1,3 @@
-import { invariant } from "../../lib/internal/libcd_invariant.mjs";
+import { invariant } from "../../lib/internal/libcd_invariant.mjs"
 
+// TODO (matt): the self check is generataed to asceratin if anything is possible.... 
