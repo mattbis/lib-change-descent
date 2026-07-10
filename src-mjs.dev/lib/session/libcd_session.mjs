@@ -1,6 +1,7 @@
 
 /** 
- * lib-change-descent is session orientated due to the nature of users and the os
+ * lib-change-descent is session orientated due to the nature of users and the os, the top most container of context
+ * which becomes queues of operations... with profile / config added.... 
  */
 
 // export const OP= {

@@ -8,6 +8,7 @@ The first part of how lkman is going to work...  This probably exists elsewhere 
 
 - [ ] only ever load and execute the very minimum required for the operation, no enterprise style bloat.. constructors, runtime, scope, constants, handles
 - [ ] define tasks and the object shape...
+- [ ] toleration, severity, security, reliability, resilence
 
 ## WIP
 

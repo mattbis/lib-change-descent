@@ -1,5 +1,7 @@
 /// libcd.configure
 
+/// is teh base configuration layer, everything else is on top of this... per session., each session is unique
+
 export const CONFIG_PRECEDENCE= {
     'static':0,
     'command':1,
@@ -17,6 +19,9 @@ export function configure(options= {}) {
  * synchronous function to execute order of predecence
  */
 export function config_gather() {}
+
+export function config_set() {}
+export function config_get() {}
 
 export function _config_defaults() {}
 export function _config_from_env() {}
