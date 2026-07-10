@@ -1,0 +1,3 @@
+/// this is how failed writes are queued.. if they don't succeed they are stored temp - in the app dir... if the target doesn't exist... it tries to keep teh current write tree
+
+//// however it persists assuming a system disk for weeks / months.... 
