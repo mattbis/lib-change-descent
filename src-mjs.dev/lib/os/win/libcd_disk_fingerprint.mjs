@@ -1,4 +1,6 @@
 import { execSync } from 'node:child_process'
+import { post } from '../imut_log/libcd_imut_log.mjs'
+import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs'
 
 /** 
  * #noqa
@@ -8,6 +10,8 @@ import { execSync } from 'node:child_process'
  * @returns {string}
  */
 export function get_disk_fingerprint(drive_letter) {
+    post(make_entry('OS_CALL', 'WMIC_CALL', { drive: drive_letter }))
+
     // Returns the Volume Serial Number (e.g., "A2C4-DE55")
     const output= execSync(`wmic volume where "driveletter='${drive_letter}'" get DeviceID, VolumeSerialNumber`).toString()
     
