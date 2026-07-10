@@ -25,3 +25,8 @@
 # history mask
 
 -- indicates readings from previous operations... TODO (matt): when more coupled to the os... 
+
+
+## TODO
+
+- the vol strategies are almost hte same thing... this makes me think to redesign as behavioural more.. since the operations are similar
