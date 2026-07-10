@@ -59,7 +59,12 @@ export class libcd_Volume {
     }
     
     // TODO: (matt): lib_cd.volume.imprint -- creates a user space marker of the disk id... that doesn't trip external virus detection for no good reasons... 
-    imprint() {}
+    imprint(imprint_options) {
+        /// if it can't imprint bubble highest log....
+        //// if it can't write retry 3 times, over a long period privately
+        //// the first imprint is a ownership manifest.... that lives in root `\libcd\var\db`
+        /// if you only have fixed disks you can skip this stage, via profile , or programmaticalkly
+    }
     /// in many arguments you could say just disable the virus scanner,, if you know what you are doing.. and you have this many disks I can assume a certain
     /// savvyness... 
     
