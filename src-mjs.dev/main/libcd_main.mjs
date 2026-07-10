@@ -5,7 +5,7 @@ export function main(profileMod) {
 export function _main_switch(profileMod= 'bg') {
     // TODO (matt): something like
     profileMod.split(/\+/gi).forEach(m => {
-        switch(profile) {
+        switch(m) {
             case 'bg':
                 break
             case 'fg':
@@ -13,5 +13,5 @@ export function _main_switch(profileMod= 'bg') {
             default:
                 break
         }
-    }    
+    })
 }

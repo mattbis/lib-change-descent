@@ -5,15 +5,15 @@
 export const LIBCD_VOL_DISCOVER_STRATEGY = {
     // one by one
     sequential: {
-        next: (index, count) = {}
+        next: (index, count) => {}
     },
     // groups of queries - in ordered procession
     staggered: {
-        next: (index, count) = {}
+        next: (index, count) => {}
     },
     // random sample - of possible total
     random_sample: {
-        next: (index, count) = {}
+        next: (index, count) => {}
     }
 }
 
@@ -42,7 +42,7 @@ export const LIBCD_VOL_TYPE= {
 
 // TODO (matt): as mentioned elsewhere the activity mods... 
 
-export class LIBCD_VOL {
+export class libcd_Volume {
     d= {
         type_log: [], // as LIBCD_VOL_TYPE
         identifiers: [], // I almost feel like this object is recreated and static.identifiers is all known os dependent volume path / drive identifiers seen

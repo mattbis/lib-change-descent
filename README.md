@@ -37,3 +37,11 @@ performance isn't important - just that this allows integration with other syste
 
 **Codebase Strategy:**
 When looking up a node by name, do not decode the node's `NamePointer` to a string. Instead, encode the target search string into binary *once*, hash it with BLAKE3, and compare the binary hashes against the tree's hash pointers.
+
+## ARCHITECTURAL PARADIGM: DUAL STORAGE DESIGN
+
+To balance robust offline state preservation with mechanical efficiency, `lib-change-descent` employs a split-storage model:
+
+1. **Persistent State Storage (SQLite):** SQLite serves as the structured database for volume mappings, session profiles, historic configuration, and offline data indexing. It provides crash resilience and robust query support for slow/cold state transitions.
+2. **In-Memory Active Workspace (Custom Binary Buffer & String Heap):** High-frequency descent comparisons and path traversals bypass the database and operate directly inside a fixed-stride binary workspace. This avoids the garbage collector (GC) entirely, ensuring high-concurrency performance and zero-allocation hot paths during active volume scans.
+

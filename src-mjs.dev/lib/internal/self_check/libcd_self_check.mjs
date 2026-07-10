@@ -37,7 +37,7 @@ export function run_self_check(ctx) {
     assert_polling_disk_vol_ids()
 
     if (ctx?.buffer) {
-        _run_full_buffer_integrity_check.call(ctx.buffer)
+        _run_full_buffer_integrity_check(ctx.buffer)
     }
 }
 
