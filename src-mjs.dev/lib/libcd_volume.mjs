@@ -17,10 +17,27 @@ export const LIBCD_VOL_DISCOVER_STRATEGY = {
     }
 }
 
-export const LIBCD_VOL_TYPE= {
+export const LIBCD_VOL_SPECIES= {
   // fixed, / mark as ...                   // cannot be fixed and removable
   // removable, / mark as volatile          // can be removable and temporary
-  // temporary / mark as less important     // can be fixed or removable - no speed restrictions
+  // temporary / mark as less important     // can be ram, fixed or removable - no speed restrictions
+}
+
+export const LIBCD_VOL_TYPE= {
+    // ram /// volatile, temporary
+    // needs to know if dynamic or fixed
+    // same as ssd... 
+
+    // vm /// --> points to ssd or hdd - interaction... 
+    
+    // ssd /// avoid writes when necessary, take advantage of speed
+    // handles many small files well, can burst when bus controllers aren't busy
+    // can handle write and read
+    
+    // hdd /// backup is better - since if not used will retain data.. writes are mostly slower, 
+    // fragmentation in some fs is awful for speed. Doesn't handle many small files well.
+    // one big file is better, can burst... when not busy. 
+    // should only be doing one operation type: read, or write
 }
 
 // TODO (matt): as mentioned elsewhere the activity mods... 
