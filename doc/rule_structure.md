@@ -4,6 +4,18 @@
 2. can descend root
 3. can descend children
 
+# read mask
+
+1. can query root dirs
+2. can query root dirs children
+3. can seek node size
+
+# speed mask
+
+1. no restrictions
+2. must be exclusive
+3. must be system controlled ( TODO (matt): is it possible to know when you can do stuff in the background more intelligently? )
+
 # activity mask
 
 1. missing
