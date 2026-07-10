@@ -1,6 +1,6 @@
 /// libcd.configure
 
-/// is teh base configuration layer, everything else is on top of this... 
+/// is teh base configuration layer, everything else is on top of this... per session., each session is unique
 
 export const CONFIG_PRECEDENCE= {
     'static':0,
