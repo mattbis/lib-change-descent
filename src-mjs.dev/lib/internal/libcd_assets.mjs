@@ -1,1 +1,3 @@
 /** checks in a staggered run whether everything is the same as it was before.... */
+
+// acts as a shortciruit to avoid later logic... 
