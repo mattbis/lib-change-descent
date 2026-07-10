@@ -11,6 +11,7 @@
 
 import { post } from '../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../internal/imut_log/libcd_imut_log_entry.mjs'
+// metric schema: src-mjs.dev/host/libcd_metric_schema.json (moved alongside this file)
 
 // ---- Runtime Detection ----
 
