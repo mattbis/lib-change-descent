@@ -17,6 +17,7 @@
 1. no restrictions
 2. must be exclusive
 3. must be system controlled ( TODO (matt): is it possible to know when you can do stuff in the background more intelligently? )
+4. phase v3 : resident monitored activiy coupled with os - or native... 
 
 # activity mask
 
