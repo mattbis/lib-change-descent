@@ -1,4 +1,6 @@
 
+// TODO (matt): this allows a rpc / ipc interface... it doesn't allow granularity.. I will make this able to perform any library function or meta operation so an application can tightly couple... 
+
 /** 
  * @enum {number} 
  */
