@@ -10,6 +10,8 @@
 2. can query root dirs children
 3. can seek node size
 
+4. is a vector this allows orders of magnitude and " size of work "
+
 # speed mask
 
 1. no restrictions
