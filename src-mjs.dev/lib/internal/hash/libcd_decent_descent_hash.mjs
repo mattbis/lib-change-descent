@@ -1,0 +1,3 @@
+/** 
+ * robotic decent hash - instead of more heavy blake3 overhead... and probably a bad idea to use... 
+ */
