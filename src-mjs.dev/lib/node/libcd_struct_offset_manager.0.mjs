@@ -3,59 +3,87 @@
  * @property {function(number): number} get_flags
  * @property {function(number): number} get_parent
  * @property {function(number): number} get_name_ptr
+ * @property {function(number): number} get_hash_ptr
  * @property {function(number): number} get_m_time
+ * @property {function(number): number} get_size
  * @property {function(number, number): void} set_flags
  * @property {function(number, number): void} set_parent
  * @property {function(number, number): void} set_name_ptr
+ * @property {function(number, number): void} set_hash_ptr
  * @property {function(number, number): void} set_m_time
+ * @property {function(number, number): void} set_size
  * @property {function(number, number): void} add_flag
  * @property {function(number, number): boolean} has_flag
  */
-export const NODE_STRIDE= 32; // Bytes per node
+export const NODE_STRIDE = 32 // Bytes per node
+export const CONTROL_SLOT_SIZE = 64 // Bytes per worker slot in control_buffer to prevent false sharing
 
-export const create_node_accessor= (buffer) => {
-    
-    const u8_view= new Uint8Array(buffer)
-    const i32_view= new Int32Array(buffer)
-    const f64_view= new Float64Array(buffer)
+export const create_node_accessor = (buffer) => {
+  const u8_view = new Uint8Array(buffer)
+  const i32_view = new Int32Array(buffer)
+  const f64_view = new Float64Array(buffer)
 
-    return {
-        // ---- Getters ---- 
-        /** @type {NodeAccessor['get_flags']} */
-        get_flags: (id) => Atomics.load(u8_view, id * NODE_STRIDE),
-        
-        /** @type {NodeAccessor['get_parent']} */
-        get_parent: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 4) / 4),
-        
-        /** @type {NodeAccessor['get_name_ptr']} */
-        get_name_ptr: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 8) / 4),
-        
-        /** @type {NodeAccessor['get_m_time']} */
-        get_m_time: (id) => f64_view[(id * NODE_STRIDE + 16) / 8], // Atomics don't support Float64
+  return {
+    // ---- Getters ----
+    /** @type {NodeAccessor['get_flags']} */
+    get_flags: (id) => Atomics.load(u8_view, id * NODE_STRIDE),
 
-        // ---- Setters ---- 
-        /** @type {NodeAccessor['set_flags']} */
-        set_flags: (id, val) => { Atomics.store(u8_view, id * NODE_STRIDE, val); },
-        
-        /** @type {NodeAccessor['set_parent']} */
-        set_parent: (id, val) => { Atomics.store(i32_view, (id * NODE_STRIDE + 4) / 4, val); },
-        
-        /** @type {NodeAccessor['set_name_ptr']} */
-        set_name_ptr: (id, val) => { Atomics.store(i32_view, (id * NODE_STRIDE + 8) / 4, val); },
-        
-        /** @type {NodeAccessor['set_m_time']} */
-        set_m_time: (id, val) => { f64_view[(id * NODE_STRIDE + 16) / 8] = val; },
-        
-        /** @type {NodeAccessor['set_size']} */
-        set_size: (id, val) => { f64_view[(id * NODE_STRIDE + 24) / 8] = val; },
+    /** @type {NodeAccessor['get_parent']} */
+    get_parent: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 4) / 4),
 
-        // ---- Bitwise Helpers ---- 
-        /** @type {NodeAccessor['add_flag']} */
-        add_flag: (id, flag) => { Atomics.or(u8_view, id * NODE_STRIDE, flag); },
-        
-        /** @type {NodeAccessor['has_flag']} */
-        has_flag: (id, flag) => (Atomics.load(u8_view, id * NODE_STRIDE) & flag) !== 0
-    }
+    /** @type {NodeAccessor['get_name_ptr']} */
+    get_name_ptr: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 8) / 4),
+
+    /** @type {NodeAccessor['get_hash_ptr']} */
+    get_hash_ptr: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 12) / 4),
+
+    /** @type {NodeAccessor['get_m_time']} */
+    get_m_time: (id) => f64_view[(id * NODE_STRIDE + 16) / 8], // Atomics don't support Float64
+
+    /** @type {NodeAccessor['get_size']} */
+    get_size: (id) => f64_view[(id * NODE_STRIDE + 24) / 8],
+
+    // ---- Setters ----
+    /** @type {NodeAccessor['set_flags']} */
+    set_flags: (id, val) => {
+      Atomics.store(u8_view, id * NODE_STRIDE, val)
+    },
+
+    /** @type {NodeAccessor['set_parent']} */
+    set_parent: (id, val) => {
+      Atomics.store(i32_view, (id * NODE_STRIDE + 4) / 4, val)
+    },
+
+    /** @type {NodeAccessor['set_name_ptr']} */
+    set_name_ptr: (id, val) => {
+      Atomics.store(i32_view, (id * NODE_STRIDE + 8) / 4, val)
+    },
+
+    /** @type {NodeAccessor['set_hash_ptr']} */
+    set_hash_ptr: (id, val) => {
+      Atomics.store(i32_view, (id * NODE_STRIDE + 12) / 4, val)
+    },
+
+    /** @type {NodeAccessor['set_m_time']} */
+    set_m_time: (id, val) => {
+      f64_view[(id * NODE_STRIDE + 16) / 8] = val
+    },
+
+    /** @type {NodeAccessor['set_size']} */
+    set_size: (id, val) => {
+      f64_view[(id * NODE_STRIDE + 24) / 8] = val
+    },
+
+    // ---- Bitwise Helpers ----
+    /** @type {NodeAccessor['add_flag']} */
+    add_flag: (id, flag) => {
+      Atomics.or(u8_view, id * NODE_STRIDE, flag)
+    },
+
+    /** @type {NodeAccessor['has_flag']} */
+    has_flag: (id, flag) =>
+      (Atomics.load(u8_view, id * NODE_STRIDE) & flag) !== 0,
+  }
 }
 
 export const getAccessorForNode= (nodeId, pages) => {

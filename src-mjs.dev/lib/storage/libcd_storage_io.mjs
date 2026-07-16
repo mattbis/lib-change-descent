@@ -1,7 +1,6 @@
 // 1p
 // 2p
 // 3p
-import {}
 
 /**
  * storage_io provides two interfaces: temporary and persistent

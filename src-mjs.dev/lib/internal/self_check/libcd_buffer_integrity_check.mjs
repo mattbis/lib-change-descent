@@ -25,9 +25,16 @@ export function _run_full_buffer_integrity_check(buffer) {
         }
 
         // 3. String Heap Bounds
-        const name_ptr= buffer.i32_view[(base + 8) / 4]
-        if (name_ptr > buffer.string_heap.byte_length) {
-            throw new Error(`POINTER_OUT_OF_BOUNDS: Node ${i} namePointer ${name_ptr} exceeds StringHeap size.`)
+        const name_ptr = buffer.i32_view[(base + 8) / 4]
+        if (buffer.string_heap && name_ptr > buffer.string_heap.byte_length) {
+            throw new Error(`POINTER_OUT_OF_BOUNDS: Node ${i} namePointer ${name_ptr} exceeds StringHeap size (${buffer.string_heap.byte_length}).`)
+        }
+
+        // 4. Hash Pointer Bounds
+        const hash_ptr = buffer.i32_view[(base + 12) / 4]
+        if (hash_ptr < 0) {
+            throw new Error(`POINTER_OUT_OF_BOUNDS: Node ${i} hashPointer ${hash_ptr} is negative.`)
         }
     }
 }
+

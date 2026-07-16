@@ -15,7 +15,7 @@ import { assert_db_file, assert_db_connection } from './libcd_assert_db.mjs'
 import { assert_storage } from './libcd_assert_storage.mjs'
 import { assert_disk_vol_id, assert_polling_disk_vol_ids } from './libcd_assert_vol_id.mjs'
 import { _run_full_buffer_integrity_check } from './libcd_buffer_integrity_check.mjs'
-import { invariant } from './libcd_invariant.mjs'
+import { invariant } from '../../libcd_invariant.mjs'
 
 export {
     // re-export primitives so callers only need one import point
