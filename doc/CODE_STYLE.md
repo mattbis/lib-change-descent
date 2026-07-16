@@ -1,6 +1,15 @@
 ### mostly mjs at the moment
 
-- prefer `var x= true`
+- make the significant part of a declaration the important part in spacing semantics:-
+  - prefer `var x= true`
+  - prefer `function foo(a= )`
+- prefer tertiary:-
+
+```
+var x= (cond)
+    ? .5+(Math.cos(x*pi)*.5)*.5
+    : 1-(Math.cos(x*pi)*.2)*Math.sin(x*pi)*(x*.22)+.22
+```
 - prefer no semicolons - they are totally stupid and due to the transition from B to C... much more is legal than you would think
 - 2 spaces is a node JS disease, it makes code too dense, 4 spaces....
 - prefer `thing.mjs` instead of `get_` `set_` like Go...
