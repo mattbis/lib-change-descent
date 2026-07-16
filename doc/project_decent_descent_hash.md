@@ -19,6 +19,7 @@ JavaScript represents all numbers as 64-bit IEEE 754 double-precision floats. In
 
 ### A. Fractional Part Hashing (`fract`)
 For any float value $x$:
+
 $$\text{fract}(x) = x - \lfloor x \rfloor$$
 
 Using fractional parts keeps the accumulator bounded within $[0, 1)$, completely preventing overflow issues or loss of precision from large numbers.
@@ -31,16 +32,20 @@ Each node in the 32-byte stride buffer contains metadata at fixed offsets:
 * **size** (bytes 24–27 or 24–31, depending on layout)
 
 We define irrational scaling factors to disperse values:
+
 $$K_1 = \sqrt{2} \approx 1.4142135623730951$$
 $$K_2 = \sqrt{3} \approx 1.7320508075688772$$
 $$K_3 = \sqrt{5} \approx 2.2360679774997897$$
 $$K_4 = \sqrt{7} \approx 2.6457513110645906$$
 
+
 For node $i$:
-$$H_{\text{node}}(i) = \text{fract}\left( \text{fract}(mtime_i \cdot K_1) + \text{fract}(size_i \cdot K_2) + \text{fract}(i \cdot K_3) \right)$$
+
+$$H_{\text{node}}(i) = \text{fract}\left( \text{fract}(\text{mtime}_i \cdot K_1) + \text{fract}(\text{size}_i \cdot K_2) + \text{fract}(i \cdot K_3) \right)$$
 
 ### C. Hierarchical Aggregation (Descent Hashing)
 To compute a directory's hash from its children without strict sorting (which causes allocations and CPU cycles):
+
 $$H_{\text{dir}} = \text{fract}\left( H_{\text{node}}(\text{dir}) \cdot K_4 + \sum_{c \in \text{children}} (H_{\text{node}}(c) \cdot K_1) \right)$$
 
 *Note on Determinism:* Since floating-point addition is not strictly associative due to rounding limits, we sum children in strict ascending order of their `Node ID` (which is already sorted sequentially in the heap layout by creation order).
@@ -62,7 +67,9 @@ $$H_{\text{dir}} = \text{fract}\left( H_{\text{node}}(\text{dir}) \cdot K_4 + \s
   * Store node hashes in the buffer itself (reserving 4 or 8 bytes of the 32-byte stride for the node's cached hash).
   * When a file node changes, calculate its new $H_{\text{node}}$.
   * Bubble the change up to its parent by executing:
-    $$H_{\text{parent\_new}} = \text{fract}(H_{\text{parent\_old}} - H_{\text{child\_old}} \cdot K_1 + H_{\text{child\_new}} \cdot K_1)$$
+
+    $$H_{\text{parent-new}} = \text{fract}\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot K_1 + H_{\text{child-new}} \cdot K_1 \right)$$
+
   * This allows $O(1)$ complexity updates for file writes without re-scanning the entire volume.
 
 ### C. Virtual Volumes (e.g., dynamic overlay, VM files)
