@@ -1,5 +1,9 @@
 // triggers very important things - even if not with `+start` and `+resident`
 
+// factors of mod controlled micro pause.... 
+export const libcd_micro_pause= {
+}
+
 /// each op has context, when run... a pipeline tracks the progress...
 export class libcd_Operation {}
 
