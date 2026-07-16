@@ -1,3 +1,7 @@
+## runtime operation
+
+- it executes a function that is the current operation, some stuff happens in order, sections then are async, worker, sync and just the calls that are needed... they are compiled, when one of the entry function triggers a cycle, and the lifecycle... keep this in mind , and how lib/internal/operation is changed .... 
+
 ## logging : chalkpack or console
 
 - they do the same thign except chalkpack allows some extra presentation and features, and i want to use it in the premise, the output of the cli is the log,.. yo udont need to log that much when your system should be logging anyway... as ai - agents, third party whatever..... so long as that is dated and rotated....
