@@ -4,6 +4,8 @@
  * which becomes queues of operations... with profile / config added.... 
  */
 
+// TODO (matt): no complex class to restore for the moment... session_restore() {} ?
+
 // export const OP= {
 //     BG: 0,
 //     FG: 1,
