@@ -9,7 +9,7 @@ Before writing any code, modifying structure, or proposing architectural changes
 ## Key Rules Summary for AI
 - **Indentation:** Exactly 4 spaces.
 - **Semicolons:** None (`no-semicolon` style).
-- **Variable Declarations:** Prefer `var`.
+- **Variable Declarations:** Prefer `var= `. Since we aren't using TS we can optimise using var, however, where applicable in execution semantics its legible to use const and let... 
 - **Method & Function Names:** Use C/Python `snake_case` (`dispatch_start_scan()`, `start_scan()`).
 - **File Naming:** `snake_case.mjs` for utilities/ops (`libcd_worker_op.mjs`); `PascalCase.mjs` prefixed with `libcd_` for class definitions (`libcd_DiskWorkerClient.mjs`).
 - **Worker IPC:** Always keep Main-Isolate clients and Worker-Isolate runtimes in separate files to prevent cross-isolate top-level import pollution.
