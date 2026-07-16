@@ -18,9 +18,9 @@ import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs';
  * @param {function(Uint8Array, object): void} eventCallback - Receives raw binary filenames and event details.
  * @returns {object} The spawned subprocess handle for lifecycle management.
  */
-export function streamOSJournal(volumePath, eventCallback) {
+export function os_journal_stream(volumePath, eventCallback) {
     post(make_entry('OS_CALL', 'STREAM_OS_JOURNAL_START', { volume: volumePath }));
 
     // TODO: Determine platform, resolve path to pre-built Zig helper, and invoke
     throw new Error('Not implemented: streamOSJournal requires compiled Zig helper');
-}
+}
