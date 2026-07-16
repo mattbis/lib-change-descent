@@ -19,11 +19,11 @@ export const STORAGE_IO_HASH= {
 }
 
 /** get or set a  storage record */
-export function stor_record(stor_record_id/* hash */, data/* blob */ ) {
+export function storage_record(stor_record_id/* hash */, data/* blob */ ) {
 }
 
 /** write a blob */
-export function stor_write(stor_record_id/* hash */, data/* blob */ ) {
+export function storage_write(stor_record_id/* hash */, data/* blob */ ) {
 }
 
 /**
@@ -31,7 +31,7 @@ export function stor_write(stor_record_id/* hash */, data/* blob */ ) {
  * @param {Blob} data 
  * @returns {Promise<string>} hash
  */
-export function stor_tmp(arg_one/* id or blob */ ) {
+export function storage_tmp(arg_one/* id or blob */ ) {
   /* if arg 1 is id return blob, otherwise store blob */
   const p= Promise.resolve()
   return p
