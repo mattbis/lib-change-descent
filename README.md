@@ -9,6 +9,8 @@ The first part of how lkman is going to work...  This probably exists elsewhere 
 - [ ] only ever load and execute the very minimum required for the operation, no enterprise style bloat.. constructors, runtime, scope, constants, handles
 - [ ] define tasks and the object shape...
 - [ ] toleration, severity, security, reliability, resilence
+- [ ] strict separation of invariant assertions (`invariant()`) for non-operation setup vs operation-controlled code that runs inside `try {} catch {}` with automatic `retry()` up to failure thresholds
+
 
 ## WIP
 
@@ -44,4 +46,15 @@ To balance robust offline state preservation with mechanical efficiency, `lib-ch
 
 1. **Persistent State Storage (SQLite):** SQLite serves as the structured database for volume mappings, session profiles, historic configuration, and offline data indexing. It provides crash resilience and robust query support for slow/cold state transitions.
 2. **In-Memory Active Workspace (Custom Binary Buffer & String Heap):** High-frequency descent comparisons and path traversals bypass the database and operate directly inside a fixed-stride binary workspace. This avoids the garbage collector (GC) entirely, ensuring high-concurrency performance and zero-allocation hot paths during active volume scans.
+
+## CONCURRENCY & JOURNAL CONCERN
+
+Since reading the native OS journal (e.g., Windows NTFS USN or Linux `fanotify`) will be the preferred mechanism for continuous volume monitoring, **this stream must be threaded and completely non-locking.** Because `lib-change-descent` is designed to be embedded as a high-performance library within larger applications, it cannot lock directory structures, hold restrictive file descriptors (`GENERIC_READ` without share flags), or block event loops while consuming journal streams. While many other filesystem tools inexplicably lock volume resources or freeze application threads during active monitoring, this library avoids blocking or locking behavior entirely by offloading native queries to dedicated worker runtimes (`src-zig.dev` / `Worker Isolate`) and sliding binary packets over `SharedArrayBuffer` memory pools.
+
+## COMPOSED OPERATIONS & MICRO-PAUSES
+
+To ensure the library executes the absolute minimum unique code per operation (`thisArg` context passing) while remaining resilient under heavy I/O, operations are designed as composed pipelines:
+1. **Operation-Controlled Execution & Retries:** Every operation (and sub-operation) executes inside `try { ... } catch (err)` blocks where transient filesystem locks, volume delays, or resource contention automatically invoke `retry(ctx, err, attempt)`. We strictly avoid throwing uncatchable `invariant()` errors inside operation pipelines so retry logic can attempt recovery.
+2. **Micro-Pauses (`libcd_micro_pause`):** Because complex operations are composed of smaller sub-operations (`thisArg` pipelines), step boundaries and retry backoff loops yield execution via micro-pauses. Profile modifiers (`+bg`: 10ms yield, `+fg`: 1ms yield, `-nolimits`: 0ms zero-pause) dynamically control yield durations, allowing the V8 event loop and host application to breathe without duplicating operational flow or stalling concurrent tasks.
+
 
