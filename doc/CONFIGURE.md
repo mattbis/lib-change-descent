@@ -1,0 +1,2 @@
+- all paths are configurable -- from one root - to diversion
+- age of the system - by default it keeps records indefinitely - this will grow in sqlite or pg... if its fs config.. and nothing else is configured TODO(matt): 30 days? 3 months? 1year 25 years? aging... hmmm 
