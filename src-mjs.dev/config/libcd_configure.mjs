@@ -25,21 +25,36 @@ export function config_gather() {}
  */ 
 export function config_gather_reduce() {}
 
+/**
+ * changes teh actual runtime .... compound
+ */
 export function config_set() {}
 export function config_get() {}
 
+export function config_ispath() {}
+/** 
+ * get or set path
+ */
+export function config_path() {}
+
+/**
+ * files must be in where it expects... 
+ */
+
+// for a config path get defaults.... 
 export function _config_defaults() {}
+
 export function _config_from_env() {}
 export function _config_from_file() {}
 
 // TODO (matt): os/win/_config_from_registry() {} , .config , 
 // TODO (matt): should all config be actually interchangeable to allow exchange of manifests? probably almost certainly yes ... XML, Yaml, or json, or all of them
 
-export const CONFIG_MOD= {
-    'release': 0,
-    'file': 1,
-    'env': 2
-}
+// export const CONFIG_MOD= {
+//     'main': 0,
+//     'file': 1,
+//     'env': 2
+// }
 
 /**
  * create a config bundle in exchangeable format
