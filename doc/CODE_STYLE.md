@@ -3,13 +3,14 @@
 - make the significant part of a declaration the important part in spacing semantics:-
   - prefer `var x= true`
   - prefer `function foo(a= )`
-- prefer tertiary:-
+- prefer tertiary ( in this formatting ) when the valueExpression is complicated enough to warrant it, if not it can be a one liner if simple enough ... the indent of the tertiary `?` `:` are the important aspect, for readability and so far as i know this has no performance aspect... :-
 
 ```
 var x= (cond)
     ? .5+(Math.cos(x*pi)*.5)*.5
     : 1-(Math.cos(x*pi)*.2)*Math.sin(x*pi)*(x*.22)+.22
 ```
+- chaining tertiary is fine instead of huge if else... xD
 - prefer intelligent usage of var for performance
   - Since we aren't using TS we can optimise using var, however, where applicable in execution semantics its legible to use const and let...
 - prefer no semicolons - they are totally stupid and due to the transition from B to C... much more is legal than you would think
