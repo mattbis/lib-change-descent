@@ -1,3 +1,4 @@
 - `commits to libcd main channel are forbidden`
 - `commits to libcd testing channel is forbidden`
+- updates to the development, testing and release builds can only be performed via the package and local management infrastructure ( that doesn't exist at the moment )... I don't want a high volume of prs, and changes have to be rather either very important, or staggered... 
 - if no commit in `.testing` or `.main` that is catastrophic as security or stability then a patch is authorised
