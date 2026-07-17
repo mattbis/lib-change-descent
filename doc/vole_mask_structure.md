@@ -1,3 +1,6 @@
+
+- the vole mask structure, contains bits for:-
+
 # acl mask
 
 1. can probe name and records
