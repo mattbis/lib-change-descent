@@ -4,7 +4,7 @@
  */
 
 import { run_operation, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
-import { LIBCD_IMPRINT_MAGIC } from '../../etc/release/libcd_config.mjs'
+import { LIBCD_IMPRINT_MAGIC } from '../../config/libcd_constants.mjs'
 
 export const LIBCD_VOLE_MASK= {
     acl: {

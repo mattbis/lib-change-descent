@@ -2,32 +2,32 @@
 
 The first part of how lkman is going to work...  This probably exists elsewhere much better.
 
-# PHASE 1
+## PROJECT PHASES & ROADMAP
 
-## CONSTRAINTS
+### Phase 1: Pure JS Core (`src-mjs.dev`) & Zero-GC Foundation
+**Goal:** Complete the native Node.js (`1p/2p`) shared memory pool and verify zero-allocation assumptions.
+- [x] Shared Memory Accessors (`node_buffer` & `string_heap`)
+- [x] `libcd_self_check.0.mjs` & Integrity Verification
+- [ ] Cache-Line Padding for Control Buffers (prevent false sharing)
 
-- [ ] only ever load and execute the very minimum required for the operation, no enterprise style bloat.. constructors, runtime, scope, constants, handles
-- [ ] define tasks and the object shape...
-- [ ] toleration, severity, security, reliability, resilence
-- [ ] strict separation of invariant assertions (`invariant()`) for non-operation setup vs operation-controlled code that runs inside `try {} catch {}` with automatic `retry()` up to failure thresholds
+### Phase 2: Decent Descent Float Hash Engine
+**Goal:** Implement the mathematical float hashing engine across all volume species (`Fixed`, `Volatile`, `Virtual`).
+- [x] Node & Directory Fractional Hashing ($K_1 \dots K_4$ scale in $[0,1)$ domain)
+- [x] Volume Species Adaptation (Behavioral Vole Masks & incremental hash bubbling)
+- [x] Operation Lifecycle micro-pause yields and try/catch retry boundaries
 
+### Phase 3: Native Zig Subprocess Integration (`src-zig.dev`)
+**Goal:** Achieve maximum mechanical sympathy via native OS kernels for near-zero CPU overhead change monitoring.
+- [ ] Windows NTFS USN Journal Reader (`libcd-journal.exe`)
+- [ ] Linux VFS Stream & `fanotify` Hook
+- [ ] Stream Consumer (`libcd_os_journal.mjs`) & Unprivileged Fallbacks
 
-## WIP
+### Phase 4: Dual Surface Polish & Production Verification
+**Goal:** Lock in tree-shaking, publish forensic logging, and benchmark against industry standards.
+- [ ] Tree-Shaking Verification (Dual Surface API class extraction)
+- [ ] Immutable Manifest Storage (flush thresholds)
+- [ ] Comprehensive Benchmarking & Stress Testing vs Chokidar
 
-- [ ] ~~TypeScript? depends whether it mangles the output too much, everything has to remain simple and exact, since GC is the enemy~~
-- [ ] memory layout & bounds: node stride, text storage sizes, and offset testing
-- [ ] scale limits: max views, node count, and heap size (needs cache aging/clearing for massive multi-volume profiles to prevent heap blowouts)
-- [ ] os interop & concurrency: os filters and resolving the shared buffer host protocol (needs a working prototype to revise)
-- [ ] engine core: motion types, strategies, and session management
-- [ ] diagnostics & release: dev/alpha consistency checks, standardized error codes `[THING]`, targeting 3 revisions for alpha
-- [ ] codify masks... that are the mechanical description of controlling byte codes to change behaviour
-
-performance isn't important - just that this allows integration with other systems and is aimed for function over filesystem
-
-# PHASE 2
-
-- schema generation on use case, its static, but still architecture phase ( 1 )
-- fixed limit custom byte size 
 
 ## STRING HEAP MITIGATION
 
