@@ -6,11 +6,8 @@
 
 // TODO (matt): no complex class to restore for the moment... session_restore() {} ?
 
-// export const OP= {
-//     BG: 0,
-//     FG: 1,
-//     IDLE: 2
-// }
+/// each set of mods in context of process... do ... you only ever use 1 normally and that spawns workers
+/// some data is global and static as it changes... known and active volumes.... 
 
 /*
  * sessions allow abnormal terminations and fast resuming of sessions... they ensure we can restore
