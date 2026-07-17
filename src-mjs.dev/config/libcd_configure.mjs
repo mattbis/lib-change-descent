@@ -20,6 +20,11 @@ export function configure(options= {}) {
  */
 export function config_gather() {}
 
+/**
+ * resolve files in order... allow patches????
+ */ 
+export function config_gather_reduce() {}
+
 export function config_set() {}
 export function config_get() {}
 
