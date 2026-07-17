@@ -1,0 +1,3 @@
+- `commits to libcd main channel are forbidden`
+- `commits to libcd testing channel is forbidden`
+- if no commit in `.testing` or `.main` that is catastrophic as security or stability then a patch is authorised
