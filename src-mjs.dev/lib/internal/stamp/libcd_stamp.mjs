@@ -14,6 +14,7 @@ import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs'
 /**
  * space-prefixed function: stamp_record
  * Records an operational stamp into both the user log and the immutable manifest log.
+ * It is not user activity generated from an application. Just the internal.
  * 
  * @param {string} event_name - Name of the action or lifecycle event triggering the stamp
  * @param {Object} [details={}] - Additional metadata or payload for the stamp
