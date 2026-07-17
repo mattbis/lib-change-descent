@@ -1,74 +1,148 @@
 /**
- * define volume management, with sympathy to the __REAL WORLD__ that we are addressing..... 
+ * define volume management & vole mask structure, with sympathy to the __REAL WORLD__
+ * redesigns strategies around behavioral vole masks (acl, read, speed, activity, history)
  */
 
-export const LIBCD_VOL_DISCOVER_STRATEGY = {
-    // one by one
-    sequential: {
-        next: (index, count) => {}
+import { run_operation, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
+
+export const LIBCD_VOLE_MASK= {
+    acl: {
+        probe_name_records: 0x01,
+        descend_root: 0x02,
+        descend_children: 0x04,
+        must_io_exclusive: 0x08
     },
-    // groups of queries - in ordered procession
-    staggered: {
-        next: (index, count) => {}
+    read: {
+        query_root_dirs: 0x01,
+        query_root_children: 0x02,
+        seek_node_size: 0x04,
+        is_vector: 0x08
     },
-    // random sample - of possible total
-    random_sample: {
-        next: (index, count) => {}
+    speed: {
+        no_restrictions: 0x01,
+        careful_ramp: 0x02,
+        system_controlled: 0x04,
+        resident_monitored: 0x08
+    },
+    activity: {
+        missing: 0x01,
+        present: 0x02,
+        busy: 0x03,       // 2 + 1 (present | missing)
+        read: 0x04,
+        write: 0x08,
+        maintain: 0x10
+    },
+    history: {
+        previous_readings: 0x01
     }
 }
 
 export const LIBCD_VOL_SPECIES= {
-  // fixed, / mark as ...                   // cannot be fixed and removable
-  // removable, / mark as volatile          // can be removable and temporary
-  // temporary / mark as less important     // can be ram, fixed or removable - no speed restrictions
+    fixed: { name: 'fixed', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions },
+    volatile: { name: 'volatile', default_speed: LIBCD_VOLE_MASK.speed.careful_ramp },
+    temporary: { name: 'temporary', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions }
 }
 
 export const LIBCD_VOL_TYPE= {
-    // ram /// volatile, temporary
-    // needs to know if dynamic or fixed
-    // same as ssd... 
-
-    // vm /// --> points to ssd or hdd - interaction... 
-    
-    // ssd /// avoid writes when necessary, take advantage of speed
-    // handles many small files well, can burst when bus controllers aren't busy
-    // can handle write and read
-    
-    // hdd /// backup is better - since if not used will retain data.. writes are mostly slower, 
-    // fragmentation in some fs is awful for speed. Doesn't handle many small files well.
-    // one big file is better, can burst... when not busy. 
-    // should only be doing one operation type: read, or write
+    ram: { species: 'volatile', io_exclusive: false },
+    vm: { species: 'fixed', io_exclusive: true },
+    ssd: { species: 'fixed', io_exclusive: false },
+    hdd: { species: 'fixed', io_exclusive: true }
 }
 
-// TODO (matt): as mentioned elsewhere the activity mods... 
+/**
+ * behavioral discovery strategies driven by active volume masks rather than rigid static loops
+ */
+export const LIBCD_VOL_DISCOVER_STRATEGY= {
+    sequential: {
+        next: function(index, count, mask= 0) {
+            if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
+            return (index + 1 < count) ? index + 1 : -1
+        }
+    },
+    staggered: {
+        next: function(index, count, mask= 0, step= 4) {
+            if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
+            var next_idx= index + step
+            if (next_idx < count) return next_idx
+            return (index + 1 < step && index + 1 < count) ? index + 1 : -1
+        }
+    },
+    random_sample: {
+        next: function(index, count, mask= 0) {
+            if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
+            return Math.floor(Math.random() * count)
+        }
+    }
+}
+
+/**
+ * dual surface vole mask helper functions for checking and applying masks behaviorally
+ * strictly uses unsigned 32-bit integer boundaries (`>>> 0`) per bitwise quirks
+ */
+export function has_mask(current_mask, target_mask) {
+    return (current_mask & target_mask) === target_mask
+}
+
+export function add_mask(current_mask, target_mask) {
+    return (current_mask | target_mask) >>> 0
+}
+
+export function clear_mask(current_mask, target_mask) {
+    return (current_mask & ~target_mask) >>> 0
+}
 
 export class libcd_Volume {
-    d= {
-        type_log: [], // as LIBCD_VOL_TYPE
-        identifiers: [], // I almost feel like this object is recreated and static.identifiers is all known os dependent volume path / drive identifiers seen
-        // which is then a metric that can be seen or used... here there is a problem OS are stupid... windows can arbitarirly change driver letters in certain
-        // scenarios......
+    constructor(options= {}) {
+        this.type= options.type || 'ssd'
+        this.species= options.species || LIBCD_VOL_TYPE[this.type]?.species || 'fixed'
+        
+        // initialize behavioral vole masks
+        this.acl_mask= LIBCD_VOLE_MASK.acl.probe_name_records | LIBCD_VOLE_MASK.acl.descend_root | LIBCD_VOLE_MASK.acl.descend_children
+        if (LIBCD_VOL_TYPE[this.type]?.io_exclusive) {
+            this.acl_mask= add_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+        }
+        
+        this.read_mask= LIBCD_VOLE_MASK.read.query_root_dirs | LIBCD_VOLE_MASK.read.query_root_children | LIBCD_VOLE_MASK.read.seek_node_size
+        this.speed_mask= LIBCD_VOL_SPECIES[this.species]?.default_speed || LIBCD_VOLE_MASK.speed.careful_ramp
+        this.activity_mask= LIBCD_VOLE_MASK.activity.present
+        this.history_mask= 0
 
-        /// TODO (matt): we need an intelligence, that knows whats not been changed for sometime, and uses this as a internal fingerprint of what disk is likely
-        // however, if the user changes teh contents of a disk a lot .... its very hard to infer....
+        this.d= {
+            type_log: [],
+            identifiers: options.identifiers || [],
+            acl_log: []
+        }
+    }
 
-        acl_log: [
-            // stores when something raised an exception that bubbled up and made an operation hang... or succeed... 
-            // TODO (matt): log pollution, too many of same type.. windows, does a ton of event logging, and its burning cpu
-        ]
+    set_type(type) {
+        this.type= type
+        this.species= LIBCD_VOL_TYPE[type]?.species || 'fixed'
+        if (LIBCD_VOL_TYPE[type]?.io_exclusive) {
+            this.acl_mask= add_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+        } else {
+            this.acl_mask= clear_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+        }
     }
-    
-    // TODO: (matt): lib_cd.volume.imprint -- creates a user space marker of the disk id... that doesn't trip external virus detection for no good reasons... 
-    imprint(imprint_options) {
-        /// if it can't imprint bubble highest log....
-        //// if it can't write retry 3 times, over a long period privately
-        //// the first imprint is a ownership manifest.... that lives in root `\libcd\var\db`
-        /// if you only have fixed disks you can skip this stage, via profile , or programmaticalkly
+
+    /**
+     * lib_cd.volume.imprint -- creates user space ownership manifest in root `\libcd\var\db`
+     * if fixed disk or profile specifies, can skip or retry up to 3 times via try/catch/retry
+     */
+    async imprint(imprint_options= {}) {
+        var self= this
+        if (this.species === 'fixed' && imprint_options.skip_fixed === true) {
+            return true
+        }
+
+        return run_operation(this, async function imprint_step() {
+            self.activity_mask= add_mask(self.activity_mask, LIBCD_VOLE_MASK.activity.write)
+            try {
+                // TODO (matt): write ownership manifest to `\libcd\var\db`
+                await libcd_micro_pause.yield(self, 'imprint_write')
+            } finally {
+                self.activity_mask= clear_mask(self.activity_mask, LIBCD_VOLE_MASK.activity.write)
+            }
+        }, { max_retries: 3 })
     }
-    /// in many arguments you could say just disable the virus scanner,, if you know what you are doing.. and you have this many disks I can assume a certain
-    /// savvyness... 
-    
-    set(type) {}
-    // get 
-    constructor() {}
 }
