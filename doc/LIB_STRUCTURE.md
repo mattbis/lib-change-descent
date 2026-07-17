@@ -8,7 +8,7 @@
 
 ## runtime operation
 
-- it executes a function that is the current operation, some stuff happens in order, sections then are async, worker, sync and just the calls that are needed... they are compiled, when one of the entry function triggers a cycle, and the lifecycle... keep this in mind , and how lib/internal/operation is changed .... 
+- it executes a function that is the current operation, some stuff happens in order, sections then are async, worker, sync and just the calls that are needed... they are compiled, when one of the entry function triggers a cycle, and the lifecycle... keep this in mind , and how lib/internal/operation is changed .... TODO (matt): given a host_id() and a computer_id() it should be possible in context of path and stuff to optimise... possible? 
 
 ## logging : chalkpack or console
 
