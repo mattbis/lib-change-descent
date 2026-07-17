@@ -9,6 +9,10 @@
 /// each set of mods in context of process... do ... you only ever use 1 normally and that spawns workers
 /// some data is global and static as it changes... known and active volumes.... 
 
+/// in default the sessions are init, and default... any app will just have this and it works as you expect..
+//// you can tho change how this operates via the config so that burst sessions replace the previous when the root/path or config path overrides it... 
+//// or not.. 
+
 /*
  * sessions allow abnormal terminations and fast resuming of sessions... they ensure we can restore
  */
