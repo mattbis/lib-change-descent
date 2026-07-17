@@ -1,16 +1,21 @@
 import { execSync } from 'node:child_process'
-import { post } from '../imut_log/libcd_imut_log.mjs'
-import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs'
+import { post } from '../../internal/imut_log/libcd_imut_log.mjs'
+import { make_entry } from '../../internal/imut_log/libcd_imut_log_entry.mjs'
 
 /** 
  * #noqa
+ * space-prefixed function: disk_fingerprint_get
  * get the unique identifier windows uses via the drive letter, so if the letter changes, the disk is identified correctly
  * 
  * @param {string} drive_letter
  * @returns {string}
  */
-export function get_disk_fingerprint(drive_letter) {
-    post(make_entry('OS_CALL', 'WMIC_CALL', { drive: drive_letter }))
+export function disk_fingerprint_get(drive_letter) {
+    try {
+        post(make_entry('OS_CALL', 'WMIC_CALL', { drive: drive_letter }))
+    } catch (e) {
+        // ignore logging errors in offline/test mode
+    }
 
     // Returns the Volume Serial Number (e.g., "A2C4-DE55")
     const output= execSync(`wmic volume where "driveletter='${drive_letter}'" get DeviceID, VolumeSerialNumber`).toString()
@@ -23,4 +28,9 @@ export function get_disk_fingerprint(drive_letter) {
     }
     
     throw new Error(`Could not fingerprint drive: ${drive_letter}`)
+}
+
+/** backward compatibility alias */
+export function get_disk_fingerprint(drive_letter) {
+    return disk_fingerprint_get(drive_letter)
 }

@@ -215,6 +215,47 @@ test("libcd_volume: behavioral Vole Masks, 32-bit safe math, and imprint operati
   assert.strictEqual(imprinted_func, true, "Imprint functional primitive skipped or completed cleanly on fixed volume")
 })
 
+import {
+  volume_add_known_id,
+  volume_has_known_id,
+  volume_get_known_ids,
+  volume_get_active_volumes,
+  volume_clear_registries
+} from "../storage/libcd_volume.mjs"
+import {
+  hardware_controller_mount_volume,
+  hardware_controller_unmount_volume,
+  hardware_controller_get_active_volumes,
+  hardware_controller_get_known_ids
+} from "../hardware/libcd_controller.mjs"
+
+test("libcd_volume & lib/hardware: active/known unique volume registries and hardware controller orchestration", async () => {
+  volume_clear_registries()
+
+  // 1. Verify manual known ID registration
+  volume_add_known_id("HW-9988-ABC", { type: "ssd", path: "C:\\" })
+  assert.strictEqual(volume_has_known_id("HW-9988-ABC"), true, "Known ID correctly registered")
+  assert.strictEqual(volume_get_known_ids().size, 1, "Known IDs count is 1")
+
+  // 2. Verify hardware controller mount volume (with fallback UUID for test isolation across OS without wmic)
+  var mounted_vol = await hardware_controller_mount_volume("D:\\", {
+    fallback_uuid: "HW-7766-DEF",
+    type: "ram"
+  })
+
+  assert.strictEqual(mounted_vol.hardware_id, "HW-7766-DEF", "Mounted volume assigned correct hardware_id")
+  assert.strictEqual(volume_has_known_id("HW-7766-DEF"), true, "Hardware controller auto-registered ID into known unique IDs")
+  assert.strictEqual(hardware_controller_get_known_ids().size, 2, "Hardware controller returns both known IDs")
+  assert.strictEqual(hardware_controller_get_active_volumes().size, 1, "Hardware controller reports 1 active mounted volume")
+  assert.strictEqual(hardware_controller_get_active_volumes().get("HW-7766-DEF"), mounted_vol, "Active volume map returns correct libcd_Volume instance")
+
+  // 3. Verify unmount
+  hardware_controller_unmount_volume("HW-7766-DEF")
+  assert.strictEqual(hardware_controller_get_active_volumes().size, 0, "Active volumes cleanly cleared after unmount")
+  assert.strictEqual(hardware_controller_get_known_ids().size, 2, "Known unique IDs history preserved after active unmount")
+})
+
+
 
 
 

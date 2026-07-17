@@ -1,6 +1,7 @@
 /**
  * define volume management & vole mask structure, with sympathy to the __REAL WORLD__
  * redesigns strategies around behavioral vole masks (acl, read, speed, activity, history)
+ * stores current known active and valid volumes, and all known possible unique volume ids
  */
 
 import { run_operation, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
@@ -78,6 +79,74 @@ export const LIBCD_VOL_DISCOVER_STRATEGY= {
 }
 
 /**
+ * internal registries for volume ids and active instances
+ */
+const _known_volume_ids= new Map() // hardware_id -> metadata { type, species, first_seen, last_seen }
+const _active_volumes= new Map()   // volume_id or hardware_id -> libcd_Volume instance
+
+/**
+ * register a unique known volume id (hardware_id or uuid) into the global registry of all known possible unique volume ids
+ */
+export function volume_add_known_id(hardware_id, metadata= {}) {
+    if (!hardware_id) return false
+    var existing= _known_volume_ids.get(hardware_id) || {}
+    _known_volume_ids.set(hardware_id, Object.assign({
+        first_seen: Date.now(),
+        type: 'ssd',
+        species: 'fixed'
+    }, existing, metadata, { last_seen: Date.now() }))
+    return true
+}
+
+/**
+ * check if a unique volume id is known across all possible unique ids
+ */
+export function volume_has_known_id(hardware_id) {
+    return _known_volume_ids.has(hardware_id)
+}
+
+/**
+ * get all known possible unique volume ids (`uuid`s / hardware IDs) and their metadata
+ */
+export function volume_get_known_ids() {
+    return new Map(_known_volume_ids)
+}
+
+/**
+ * register an active, mounted volume into the set of current known active and valid volumes
+ */
+export function volume_add_active(volume_instance, volume_id) {
+    if (!volume_instance) return false
+    var id= volume_id || volume_instance.hardware_id || volume_instance.d?.identifiers?.[0] || (`vol_` + _active_volumes.size)
+    volume_instance.hardware_id= id
+    _active_volumes.set(id, volume_instance)
+    volume_add_known_id(id, { type: volume_instance.type, species: volume_instance.species })
+    return id
+}
+
+/**
+ * remove an active volume when unmounted/inactive
+ */
+export function volume_remove_active(volume_id) {
+    return _active_volumes.delete(volume_id)
+}
+
+/**
+ * get the current known active and valid volumes
+ */
+export function volume_get_active_volumes() {
+    return new Map(_active_volumes)
+}
+
+/**
+ * clear registries (for testing and clean state resets)
+ */
+export function volume_clear_registries() {
+    _known_volume_ids.clear()
+    _active_volumes.clear()
+}
+
+/**
  * space-prefixed dual surface vole mask helper functions for checking and applying masks behaviorally
  * strictly uses unsigned 32-bit integer boundaries (`>>> 0`) per bitwise quirks
  */
@@ -96,8 +165,14 @@ export function volume_clear_mask(current_mask, target_mask) {
 /**
  * functional primitive for volume imprinting (Dual Surface API)
  * creates user space ownership manifest in root `\libcd\var\db` without tripping endpoint security
+ * registers hardware_id into known and active sets
  */
 export async function volume_imprint(target, hardware_id, imprint_options= {}) {
+    if (hardware_id) {
+        volume_add_known_id(hardware_id, { type: target.type, species: target.species, imprinted: true })
+        volume_add_active(target, hardware_id)
+    }
+
     if (target.species === 'fixed' && imprint_options.skip_fixed === true) {
         return true
     }
@@ -120,6 +195,7 @@ export class libcd_Volume {
     constructor(options= {}) {
         this.type= options.type || 'ssd'
         this.species= options.species || LIBCD_VOL_TYPE[this.type]?.species || 'fixed'
+        this.hardware_id= options.hardware_id || options.identifiers?.[0] || null
         
         // initialize behavioral vole masks
         this.acl_mask= LIBCD_VOLE_MASK.acl.probe_name_records | LIBCD_VOLE_MASK.acl.descend_root | LIBCD_VOLE_MASK.acl.descend_children
@@ -134,8 +210,13 @@ export class libcd_Volume {
 
         this.d= {
             type_log: [],
-            identifiers: options.identifiers || [],
+            identifiers: options.identifiers || (this.hardware_id ? [this.hardware_id] : []),
             acl_log: []
+        }
+
+        if (this.hardware_id) {
+            volume_add_known_id(this.hardware_id, { type: this.type, species: this.species })
+            volume_add_active(this, this.hardware_id)
         }
     }
 

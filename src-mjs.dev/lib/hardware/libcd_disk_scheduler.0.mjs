@@ -1,4 +1,8 @@
-export async function* create_disk_scheduler(disk_queue, options= {}) {
+/**
+ * space-prefixed function: hardware_create_disk_scheduler
+ * schedules disk tasks avoiding bus contention on HDDs
+ */
+export async function* hardware_create_disk_scheduler(disk_queue, options= {}) {
     const max_workers= options.max_workers || 4
     const bus_activity= new Map()
     let active_workers= 0
@@ -37,4 +41,9 @@ export async function* create_disk_scheduler(disk_queue, options= {}) {
         // If no tasks are ready or pool is full, wait a bit
         await waitForSlot()
     }
+}
+
+/** backward compatibility alias */
+export async function* create_disk_scheduler(disk_queue, options= {}) {
+    return yield* hardware_create_disk_scheduler(disk_queue, options)
 }
