@@ -78,19 +78,42 @@ export const LIBCD_VOL_DISCOVER_STRATEGY= {
 }
 
 /**
- * dual surface vole mask helper functions for checking and applying masks behaviorally
+ * space-prefixed dual surface vole mask helper functions for checking and applying masks behaviorally
  * strictly uses unsigned 32-bit integer boundaries (`>>> 0`) per bitwise quirks
  */
-export function has_mask(current_mask, target_mask) {
+export function volume_has_mask(current_mask, target_mask) {
     return (current_mask & target_mask) === target_mask
 }
 
-export function add_mask(current_mask, target_mask) {
+export function volume_add_mask(current_mask, target_mask) {
     return (current_mask | target_mask) >>> 0
 }
 
-export function clear_mask(current_mask, target_mask) {
+export function volume_clear_mask(current_mask, target_mask) {
     return (current_mask & ~target_mask) >>> 0
+}
+
+/**
+ * functional primitive for volume imprinting (Dual Surface API)
+ * creates user space ownership manifest in root `\libcd\var\db` without tripping endpoint security
+ */
+export async function volume_imprint(target, hardware_id, imprint_options= {}) {
+    if (target.species === 'fixed' && imprint_options.skip_fixed === true) {
+        return true
+    }
+
+    return run_operation(target, async function imprint_step() {
+        target.activity_mask= volume_add_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write)
+        try {
+            // write ownership manifest to `\libcd\var\db` using the 32-bit magic imprint
+            var manifest_payload= new Uint32Array([LIBCD_IMPRINT_MAGIC, hardware_id || 0x0])
+            // TODO (matt): fs.writeFile(volume_root + '\\libcd\\var\\db\\imprint.bin', manifest_payload)
+
+            await libcd_micro_pause.yield(target, 'imprint_write')
+        } finally {
+            target.activity_mask= volume_clear_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write)
+        }
+    }, { max_retries: 3 })
 }
 
 export class libcd_Volume {
@@ -101,7 +124,7 @@ export class libcd_Volume {
         // initialize behavioral vole masks
         this.acl_mask= LIBCD_VOLE_MASK.acl.probe_name_records | LIBCD_VOLE_MASK.acl.descend_root | LIBCD_VOLE_MASK.acl.descend_children
         if (LIBCD_VOL_TYPE[this.type]?.io_exclusive) {
-            this.acl_mask= add_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+            this.acl_mask= volume_add_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
         }
         
         this.read_mask= LIBCD_VOLE_MASK.read.query_root_dirs | LIBCD_VOLE_MASK.read.query_root_children | LIBCD_VOLE_MASK.read.seek_node_size
@@ -120,33 +143,16 @@ export class libcd_Volume {
         this.type= type
         this.species= LIBCD_VOL_TYPE[type]?.species || 'fixed'
         if (LIBCD_VOL_TYPE[type]?.io_exclusive) {
-            this.acl_mask= add_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+            this.acl_mask= volume_add_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
         } else {
-            this.acl_mask= clear_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+            this.acl_mask= volume_clear_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
         }
     }
 
     /**
-     * lib_cd.volume.imprint -- creates user space ownership manifest in root `\libcd\var\db`
-     * if fixed disk or profile specifies, can skip or retry up to 3 times via try/catch/retry
+     * class wrapper delegating to functional primitive volume_imprint
      */
     async imprint(hardware_id, imprint_options= {}) {
-        var self= this
-        if (this.species === 'fixed' && imprint_options.skip_fixed === true) {
-            return true
-        }
-
-        return run_operation(this, async function imprint_step() {
-            self.activity_mask= add_mask(self.activity_mask, LIBCD_VOLE_MASK.activity.write)
-            try {
-                // write ownership manifest to `\libcd\var\db` using the 32-bit magic imprint
-                var manifest_payload = new Uint32Array([LIBCD_IMPRINT_MAGIC, hardware_id || 0x0])
-                // TODO (matt): fs.writeFile(volume_root + '\\libcd\\var\\db\\imprint.bin', manifest_payload)
-
-                await libcd_micro_pause.yield(self, 'imprint_write')
-            } finally {
-                self.activity_mask= clear_mask(self.activity_mask, LIBCD_VOLE_MASK.activity.write)
-            }
-        }, { max_retries: 3 })
+        return volume_imprint(this, hardware_id, imprint_options)
     }
 }

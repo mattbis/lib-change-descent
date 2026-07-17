@@ -180,36 +180,41 @@ import {
   libcd_Volume,
   LIBCD_VOLE_MASK,
   LIBCD_VOL_DISCOVER_STRATEGY,
-  has_mask,
-  add_mask,
-  clear_mask
+  volume_has_mask,
+  volume_add_mask,
+  volume_clear_mask,
+  volume_imprint
 } from "../storage/libcd_volume.mjs"
 
 test("libcd_volume: behavioral Vole Masks, 32-bit safe math, and imprint operations", async () => {
   // 1. Verify safe 32-bit bitwise helpers across vole masks
   var mask = LIBCD_VOLE_MASK.acl.probe_name_records | LIBCD_VOLE_MASK.acl.descend_root
-  assert.strictEqual(has_mask(mask, LIBCD_VOLE_MASK.acl.descend_root), true)
-  assert.strictEqual(has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), false)
+  assert.strictEqual(volume_has_mask(mask, LIBCD_VOLE_MASK.acl.descend_root), true)
+  assert.strictEqual(volume_has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), false)
 
-  mask = add_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
-  assert.strictEqual(has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), true)
+  mask = volume_add_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+  assert.strictEqual(volume_has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), true)
 
-  mask = clear_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
-  assert.strictEqual(has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), false)
+  mask = volume_clear_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
+  assert.strictEqual(volume_has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), false)
 
   // 2. Verify behavioral discovery strategies check activity busy mask
   var busy_mask = LIBCD_VOLE_MASK.activity.busy
   assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, busy_mask), -1, "Sequential skips discovery when volume is busy")
   assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, 0), 1, "Sequential advances index when volume is idle")
 
-  // 3. Verify libcd_Volume initialization and imprint operation
+  // 3. Verify libcd_Volume initialization and imprint operation (both class wrapper and functional primitive)
   var vol = new libcd_Volume({ type: "vm" })
   assert.strictEqual(vol.species, "fixed")
-  assert.strictEqual(has_mask(vol.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), true, "VM volume defaults to exclusive IO")
+  assert.strictEqual(volume_has_mask(vol.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), true, "VM volume defaults to exclusive IO")
 
-  var imprinted = await vol.imprint(0x12345678, { skip_fixed: true })
-  assert.strictEqual(imprinted, true, "Imprint skipped or completed cleanly on fixed volume")
+  var imprinted_class = await vol.imprint(0x12345678, { skip_fixed: true })
+  assert.strictEqual(imprinted_class, true, "Imprint class wrapper skipped or completed cleanly on fixed volume")
+
+  var imprinted_func = await volume_imprint(vol, 0x12345678, { skip_fixed: true })
+  assert.strictEqual(imprinted_func, true, "Imprint functional primitive skipped or completed cleanly on fixed volume")
 })
+
 
 
 
