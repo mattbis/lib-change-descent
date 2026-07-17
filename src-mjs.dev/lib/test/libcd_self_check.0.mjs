@@ -28,11 +28,11 @@ test("libcd_self_check: pre_op_check and run_self_check orchestration", () => {
 test("libcd_self_check: zero-GC SharedArrayBuffer node struct accessors", () => {
   const sab = new SharedArrayBuffer(NODE_STRIDE * 4) // 4 nodes
   const accessor = create_node_accessor(sab)
-
   const node_id = 1
   const CANARY_VAL = 0xAA
 
-  // 1. Test flags and bitwise Atomics helpers
+  // 1. Test flags and bitwise Atomics helpers (Node accessor retains get_/set_ per struct invariant rules)
+
   accessor.set_flags(node_id, 0x01)
   assert.strictEqual(accessor.get_flags(node_id), 0x01)
   accessor.add_flag(node_id, 0x04)
@@ -48,15 +48,15 @@ test("libcd_self_check: zero-GC SharedArrayBuffer node struct accessors", () => 
   accessor.set_name_ptr(node_id, 128)
   assert.strictEqual(accessor.get_name_ptr(node_id), 128)
 
-  // 4. Test mtime and size (Float64 fields)
+  // 4. Test m_time and size (Float64 fields with BigUint64Array Atomics)
   const now = Date.now()
   accessor.set_m_time(node_id, now)
   assert.strictEqual(accessor.get_m_time(node_id), now)
 
   accessor.set_size(node_id, 4096.5)
-  // Check size offset 24 directly or via getter if added
-  const f64_view = new Float64Array(sab)
-  assert.strictEqual(f64_view[(node_id * NODE_STRIDE + 24) / 8], 4096.5)
+  assert.strictEqual(accessor.get_size(node_id), 4096.5)
+
+
 
   // 5. Set canary at offset 31 for full buffer integrity verification
   const u8_view = new Uint8Array(sab)

@@ -20,7 +20,8 @@ export const CONTROL_SLOT_SIZE = 64 // Bytes per worker slot in control_buffer t
 
 /**
  * space-prefixed function: node_create_accessor
- * creates zero-GC typed array accessors over node structs using Atomics across all fields (including Float64 via BigUint64Array bits)
+ * creates zero-GC typed array accessors over node structs using Atomics across all fields (including Float64 via BigUint64Array bits).
+ * NOTE: Node accessors specifically retain get_/set_ (unlike Go-style classes) because rigid struct boundaries require branch-free monomorphic JIT inlining.
  * @param {SharedArrayBuffer|ArrayBuffer} buffer
  */
 export const node_create_accessor = (buffer) => {
@@ -107,14 +108,14 @@ export const node_create_accessor = (buffer) => {
 export const create_node_accessor = (buffer) => node_create_accessor(buffer)
 
 /**
- * space-prefixed function: node_get_accessor
+ * space-prefixed function: node_accessor
  */
-export const node_get_accessor = (nodeId, pages) => {
+export const node_accessor = (nodeId, pages) => {
     const pageIdx = nodeId >> 16
     const offset = nodeId & 0xFFFF
     return node_create_accessor(pages[pageIdx])//.at(offset)
 }
 
-/** backward compatibility alias */
-export const getAccessorForNode = (nodeId, pages) => node_get_accessor(nodeId, pages)
-
+/** backward compatibility aliases */
+export const getAccessorForNode = (nodeId, pages) => node_accessor(nodeId, pages)
+export const node_get_accessor = (nodeId, pages) => node_accessor(nodeId, pages)
