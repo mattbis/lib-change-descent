@@ -4,6 +4,7 @@
  */
 
 import { run_operation, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
+import { LIBCD_IMPRINT_MAGIC } from '../../etc/release/libcd_config.mjs'
 
 export const LIBCD_VOLE_MASK= {
     acl: {
@@ -129,7 +130,7 @@ export class libcd_Volume {
      * lib_cd.volume.imprint -- creates user space ownership manifest in root `\libcd\var\db`
      * if fixed disk or profile specifies, can skip or retry up to 3 times via try/catch/retry
      */
-    async imprint(imprint_options= {}) {
+    async imprint(hardware_id, imprint_options= {}) {
         var self= this
         if (this.species === 'fixed' && imprint_options.skip_fixed === true) {
             return true
@@ -138,7 +139,10 @@ export class libcd_Volume {
         return run_operation(this, async function imprint_step() {
             self.activity_mask= add_mask(self.activity_mask, LIBCD_VOLE_MASK.activity.write)
             try {
-                // TODO (matt): write ownership manifest to `\libcd\var\db`
+                // write ownership manifest to `\libcd\var\db` using the 32-bit magic imprint
+                var manifest_payload = new Uint32Array([LIBCD_IMPRINT_MAGIC, hardware_id || 0x0])
+                // TODO (matt): fs.writeFile(volume_root + '\\libcd\\var\\db\\imprint.bin', manifest_payload)
+
                 await libcd_micro_pause.yield(self, 'imprint_write')
             } finally {
                 self.activity_mask= clear_mask(self.activity_mask, LIBCD_VOLE_MASK.activity.write)

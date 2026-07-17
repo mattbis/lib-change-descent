@@ -207,9 +207,10 @@ test("libcd_volume: behavioral Vole Masks, 32-bit safe math, and imprint operati
   assert.strictEqual(vol.species, "fixed")
   assert.strictEqual(has_mask(vol.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), true, "VM volume defaults to exclusive IO")
 
-  var imprinted = await vol.imprint({ skip_fixed: true })
+  var imprinted = await vol.imprint(0x12345678, { skip_fixed: true })
   assert.strictEqual(imprinted, true, "Imprint skipped or completed cleanly on fixed volume")
 })
+
 
 
 
