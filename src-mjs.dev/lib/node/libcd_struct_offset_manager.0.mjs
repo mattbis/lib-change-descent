@@ -18,10 +18,19 @@
 export const NODE_STRIDE = 32 // Bytes per node
 export const CONTROL_SLOT_SIZE = 64 // Bytes per worker slot in control_buffer to prevent false sharing
 
-export const create_node_accessor = (buffer) => {
+/**
+ * space-prefixed function: node_create_accessor
+ * creates zero-GC typed array accessors over node structs using Atomics across all fields (including Float64 via BigUint64Array bits)
+ * @param {SharedArrayBuffer|ArrayBuffer} buffer
+ */
+export const node_create_accessor = (buffer) => {
   const u8_view = new Uint8Array(buffer)
   const i32_view = new Int32Array(buffer)
-  const f64_view = new Float64Array(buffer)
+  const bi64_view = new BigUint64Array(buffer)
+
+  // Scratch buffer for 64-bit float <-> uint64 bit reinterpretation during Atomics operations
+  const f64_scratch = new Float64Array(1)
+  const bi64_scratch = new BigUint64Array(f64_scratch.buffer)
 
   return {
     // ---- Getters ----
@@ -38,10 +47,16 @@ export const create_node_accessor = (buffer) => {
     get_hash_ptr: (id) => Atomics.load(i32_view, (id * NODE_STRIDE + 12) / 4),
 
     /** @type {NodeAccessor['get_m_time']} */
-    get_m_time: (id) => f64_view[(id * NODE_STRIDE + 16) / 8], // Atomics don't support Float64
+    get_m_time: (id) => {
+      bi64_scratch[0] = Atomics.load(bi64_view, (id * NODE_STRIDE + 16) / 8)
+      return f64_scratch[0]
+    },
 
     /** @type {NodeAccessor['get_size']} */
-    get_size: (id) => f64_view[(id * NODE_STRIDE + 24) / 8],
+    get_size: (id) => {
+      bi64_scratch[0] = Atomics.load(bi64_view, (id * NODE_STRIDE + 24) / 8)
+      return f64_scratch[0]
+    },
 
     // ---- Setters ----
     /** @type {NodeAccessor['set_flags']} */
@@ -66,12 +81,14 @@ export const create_node_accessor = (buffer) => {
 
     /** @type {NodeAccessor['set_m_time']} */
     set_m_time: (id, val) => {
-      f64_view[(id * NODE_STRIDE + 16) / 8] = val
+      f64_scratch[0] = val
+      Atomics.store(bi64_view, (id * NODE_STRIDE + 16) / 8, bi64_scratch[0])
     },
 
     /** @type {NodeAccessor['set_size']} */
     set_size: (id, val) => {
-      f64_view[(id * NODE_STRIDE + 24) / 8] = val
+      f64_scratch[0] = val
+      Atomics.store(bi64_view, (id * NODE_STRIDE + 24) / 8, bi64_scratch[0])
     },
 
     // ---- Bitwise Helpers ----
@@ -86,8 +103,18 @@ export const create_node_accessor = (buffer) => {
   }
 }
 
-export const getAccessorForNode= (nodeId, pages) => {
-    const pageIdx= nodeId >> 16
-    const offset= nodeId & 0xFFFF
-    return create_node_accessor(pages[pageIdx])//.at(offset)
+/** backward compatibility alias */
+export const create_node_accessor = (buffer) => node_create_accessor(buffer)
+
+/**
+ * space-prefixed function: node_get_accessor
+ */
+export const node_get_accessor = (nodeId, pages) => {
+    const pageIdx = nodeId >> 16
+    const offset = nodeId & 0xFFFF
+    return node_create_accessor(pages[pageIdx])//.at(offset)
 }
+
+/** backward compatibility alias */
+export const getAccessorForNode = (nodeId, pages) => node_get_accessor(nodeId, pages)
+

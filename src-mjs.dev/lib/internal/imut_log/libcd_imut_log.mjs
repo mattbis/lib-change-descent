@@ -27,8 +27,10 @@ function get_worker() {
     if (_worker !== null) return _worker
 
     _worker= new Worker(WORKER_PATH)
+    _worker.unref()
 
     // manifest hook — receives FLUSHED notifications from the worker
+
     _worker.on('message', (msg) => {
         if (msg?.type === 'FLUSHED') {
             // TODO(matt): wire to libcd_manifest when ready

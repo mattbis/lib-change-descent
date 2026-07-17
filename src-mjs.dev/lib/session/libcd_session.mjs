@@ -17,6 +17,8 @@
  * sessions allow abnormal terminations and fast resuming of sessions... they ensure we can restore
  */
 
+import { LIBCD_HEADER_SIZE as HEADER_SIZE, LIBCD_MAGIC as MAGIC } from '../../config/libcd_constants.mjs'
+
 /**
  * creates a session " view " - preallocate 
  * @param {number} node_count 
@@ -24,6 +26,7 @@
  * @returns 
  */
 export function session_header_create(node_count, heap_size) {
+
     const buffer= new ArrayBuffer(HEADER_SIZE)
     const view= new DataView(buffer)
     const encoder= new TextEncoder()
