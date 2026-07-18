@@ -185,7 +185,11 @@ import {
   volume_add_mask,
   volume_clear_mask,
   volume_is_busy,
-  volume_imprint
+  volume_imprint,
+  time_mask_get_duration_ms,
+  time_mask_is_expired,
+  time_mask_format,
+  volume_flags
 } from "../storage/libcd_volume.mjs"
 
 test("libcd_volume: behavioral Vole Masks, 32-bit safe math, and imprint operations", async () => {
@@ -206,10 +210,15 @@ test("libcd_volume: behavioral Vole Masks, 32-bit safe math, and imprint operati
   assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, busy_mask), -1, "Sequential skips discovery when volume is busy with maintenance")
   assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, LIBCD_VOLE_MASK.activity.present), 1, "Sequential advances index when volume is idle present without maintenance")
 
-  // 3. Verify libcd_Volume initialization and imprint operation (both class wrapper and functional primitive)
+  // 3. Verify libcd_Volume initialization, time mask flags, and imprint operation
   var vol = new libcd_Volume({ type: "vm" })
   assert.strictEqual(vol.species, "fixed")
   assert.strictEqual(volume_has_mask(vol.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), true, "VM volume defaults to exclusive IO")
+
+  var v_flags = vol.flags()
+  assert.strictEqual(v_flags.time_mask, LIBCD_VOLE_MASK.time.year_3, "Volume initializes with default 3 years time mask (0x10)")
+  assert.strictEqual(v_flags.time_ttl_ms, 94608000000, "TTL exactly matches 3 years")
+  assert.strictEqual(v_flags.expired, false, "Newly created volume is not expired")
 
   var imprinted_class = await vol.imprint(0x12345678, { skip_fixed: true })
   assert.strictEqual(imprinted_class, true, "Imprint class wrapper skipped or completed cleanly on fixed volume")
@@ -263,12 +272,18 @@ import {
   arg_slice_compare_secure_raw,
   arg_slice_compare_secure,
   arg_parse_binary_header,
-  arg_parse_cli
+  arg_parse_cli,
+  arg_parse_profile
 } from "../arg/libcd_arg.mjs"
 import { libcd_ArgParser } from "../arg/libcd_ArgParser.mjs"
 
 test("libcd_arg: fast/secure slice comparators, binary header parsing, and dual surface CLI arg parser", () => {
-  // 1. Verify fast zero-GC slice comparator
+  // 1. Verify profile parsing attaches default 3 years time mask (0x10)
+  var prof = arg_parse_profile("+resident")
+  assert.strictEqual(prof.time_mask, 0x10, "Default profile initialization sets 3 years time mask per doc")
+  assert.strictEqual(prof.periodic_maintenance, true, "Maintenance is enabled by default per profile")
+
+  // 2. Verify fast zero-GC slice comparator
   var buf_a = new Uint8Array([0xCD, 0xCD, 0x01, 0x02, 0x03])
   var buf_b = new Uint8Array([0x00, 0xCD, 0xCD, 0x01, 0xFF])
   assert.strictEqual(arg_slice_compare_fast(buf_a, 0, buf_b, 1, 3), true, "Fast slice match across offsets 0 and 1")
@@ -344,7 +359,7 @@ test("libcd_security: Object.freeze boundaries, null-prototype maps, and prototy
   }
 })
 
-import { ctx_create, ctx_profile, ctx_buffer, libcd_Context } from "../internal/ctx/libcd_ctx.mjs"
+import { ctx_create, ctx_profile, ctx_buffer, ctx_flags, ctx_run_time_maintenance, libcd_Context } from "../internal/ctx/libcd_ctx.mjs"
 import {
   change_graph_init,
   change_graph_record,
@@ -356,12 +371,23 @@ import {
 } from "../render/libcd_change_graph.mjs"
 
 test("libcd_change_graph & libcd_ctx: lifecycle context buffer pools, entropy accumulation, decay sweeps, and SVG/bitmap output", () => {
-  // 1. Verify lifecycle context creation and null-prototype / map registries
+  // 1. Verify lifecycle context creation, profile accessors, and time mask flags
   var ctx = ctx_create({ change_graph_buckets: 16, profile: "+resident" })
   assert.strictEqual(ctx_profile(ctx), "+resident", "Context profile accessor reads correctly")
   assert.strictEqual(ctx_profile(ctx, "+fg"), "+fg", "Context profile accessor writes and returns new profile")
   assert.ok(ctx_buffer(ctx, "change_graph_buffer") instanceof Float32Array, "Change graph scalar buffer is initialized inside ctx")
   assert.strictEqual(ctx_buffer(ctx, "change_graph_buffer").length, 16, "Buffer matches configured bucket count")
+
+  var c_flags = ctx_flags(ctx)
+  assert.strictEqual(c_flags.time_mask, 0x10, "Context initializes with default 3 years time mask")
+  assert.strictEqual(c_flags.expired, false, "Newly created context is not expired")
+
+  var maint = ctx_run_time_maintenance(ctx)
+  assert.strictEqual(maint.compacted, false, "Maintenance check runs cleanly without unexpected early compaction")
+
+  var class_ctx = new libcd_Context({ change_graph_buckets: 8 })
+  assert.strictEqual(class_ctx.flags().time_mask, 0x10, "Dual surface class wrapper flags() method returns full status")
+  assert.strictEqual(typeof class_ctx.run_maintenance().compacted, "boolean", "Dual surface run_maintenance() executes cleanly")
 
   // 2. Verify change graph recording and clamping across buckets
   var val0 = change_graph_record(ctx, 0, 0.5)

@@ -50,9 +50,93 @@ export const LIBCD_VOLE_MASK= Object.freeze({
         maintain: 0x10
     }),
     history: Object.freeze({
+        volatile: 0x01,
+        storing: 0x02,
         previous_readings: 0x01
+    }),
+    time: Object.freeze({
+        none: 0x00,
+        session_only: 0x01,   // expires when process/ctx closes
+        day_1: 0x02,          // 24 hours (86,400,000 ms)
+        month_1: 0x04,        // 30 days (2,592,000,000 ms)
+        year_1: 0x08,         // 365 days (31,536,000,000 ms)
+        year_3: 0x10,         // 3 years default config init (94,608,000,000 ms)
+        custom_date: 0x80     // high bit flag indicating explicit JS Date/timestamp attached
     })
 })
+
+/**
+ * space-prefixed function: time_mask_get_duration_ms
+ * converts time mask bit value or JS Date/timestamp into duration milliseconds
+ */
+export function time_mask_get_duration_ms(mask_or_date= LIBCD_VOLE_MASK.time.year_3) {
+    if (mask_or_date && typeof mask_or_date === 'object' && typeof mask_or_date.getTime === 'function') {
+        return Math.max(0, mask_or_date.getTime() - Date.now())
+    }
+    if (typeof mask_or_date === 'number' && mask_or_date > 0xff) {
+        return Math.max(0, mask_or_date - Date.now())
+    }
+    if (mask_or_date === LIBCD_VOLE_MASK.time.session_only) return 0
+    if (mask_or_date === LIBCD_VOLE_MASK.time.day_1) return 86400000
+    if (mask_or_date === LIBCD_VOLE_MASK.time.month_1) return 2592000000
+    if (mask_or_date === LIBCD_VOLE_MASK.time.year_1) return 31536000000
+    if (mask_or_date === LIBCD_VOLE_MASK.time.year_3) return 94608000000
+    return 94608000000 // default config init: 3 years
+}
+
+/**
+ * space-prefixed function: time_mask_is_expired
+ * checks whether a created timestamp + time mask has expired
+ */
+export function time_mask_is_expired(created_ts= Date.now(), mask_or_date= LIBCD_VOLE_MASK.time.year_3) {
+    if (mask_or_date === LIBCD_VOLE_MASK.time.session_only) return false
+    if (mask_or_date && typeof mask_or_date === 'object' && typeof mask_or_date.getTime === 'function') {
+        return Date.now() > mask_or_date.getTime()
+    }
+    if (typeof mask_or_date === 'number' && mask_or_date > 0xff) {
+        return Date.now() > mask_or_date
+    }
+    var dur= time_mask_get_duration_ms(mask_or_date)
+    return Date.now() > (created_ts + dur)
+}
+
+/**
+ * space-prefixed function: time_mask_format
+ * returns descriptive human/log string for time mask or Date
+ */
+export function time_mask_format(mask_or_date= LIBCD_VOLE_MASK.time.year_3) {
+    if (mask_or_date && typeof mask_or_date === 'object' && typeof mask_or_date.toISOString === 'function') {
+        return 'Date(' + mask_or_date.toISOString() + ')'
+    }
+    if (typeof mask_or_date === 'number' && mask_or_date > 0xff) {
+        return 'Timestamp(' + new Date(mask_or_date).toISOString() + ')'
+    }
+    if (mask_or_date === LIBCD_VOLE_MASK.time.session_only) return 'session_only (0x01)'
+    if (mask_or_date === LIBCD_VOLE_MASK.time.day_1) return '24 hours (0x02)'
+    if (mask_or_date === LIBCD_VOLE_MASK.time.month_1) return '30 days (0x04)'
+    if (mask_or_date === LIBCD_VOLE_MASK.time.year_1) return '1 year (0x08)'
+    if (mask_or_date === LIBCD_VOLE_MASK.time.year_3) return '3 years (0x10)'
+    return '3 years default (0x10)'
+}
+
+/**
+ * space-prefixed function: volume_flags
+ * returns full behavioral flag state and time mask details for connected applications and logs
+ */
+export function volume_flags(target) {
+    if (!target) return null
+    return {
+        acl_mask: target.acl_mask,
+        read_mask: target.read_mask,
+        speed_mask: target.speed_mask,
+        activity_mask: target.activity_mask,
+        history_mask: target.history_mask,
+        time_mask: target.time_mask,
+        time_ttl_ms: time_mask_get_duration_ms(target.time_mask),
+        time_mask_desc: time_mask_format(target.time_mask),
+        expired: time_mask_is_expired(target.created_ts, target.time_mask)
+    }
+}
 
 /**
  * space-prefixed function: volume_is_busy
@@ -244,7 +328,9 @@ export class libcd_Volume {
         this.read_mask= LIBCD_VOLE_MASK.read.query_root_dirs | LIBCD_VOLE_MASK.read.query_root_children | LIBCD_VOLE_MASK.read.seek_node_size
         this.speed_mask= LIBCD_VOL_SPECIES[this.species]?.default_speed || LIBCD_VOLE_MASK.speed.careful_ramp
         this.activity_mask= LIBCD_VOLE_MASK.activity.present
-        this.history_mask= 0
+        this.history_mask= LIBCD_VOLE_MASK.history.storing
+        this.time_mask= arg_get_opt(opts, 'time_mask', LIBCD_VOLE_MASK.time.year_3) || LIBCD_VOLE_MASK.time.year_3
+        this.created_ts= arg_get_opt(opts, 'created_ts', Date.now()) || Date.now()
 
         this.d= {
             type_log: [],
@@ -272,6 +358,13 @@ export class libcd_Volume {
         } else {
             this.acl_mask= volume_clear_mask(this.acl_mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
         }
+    }
+
+    /**
+     * return full behavioral flag state and time mask details for connected apps ("query flags()")
+     */
+    flags() {
+        return volume_flags(this)
     }
 
     /**

@@ -65,6 +65,22 @@ export function arg_get_opt(opts, key, default_val= null) {
 }
 
 /**
+ * space-prefixed function: arg_parse_profile
+ * parses execution profiles (`+resident`, `+bg`, `+fg`, `-nolimits`) and attaches time mask configuration (`default 3 years 0x10`)
+ */
+export function arg_parse_profile(profile_arg= '+bg', options= {}) {
+    var profile= typeof profile_arg === 'string' ? profile_arg : '+bg'
+    var time_mask= arg_get_opt(options, 'time_mask', 0x10) || 0x10 // default config init: 3 years per time mask doc
+    
+    return Object.assign(Object.create(null), {
+        profile: profile,
+        time_mask: time_mask,
+        periodic_maintenance: true,
+        yield_ms: profile === '+fg' ? 1 : (profile === '-nolimits' ? 0 : 10)
+    })
+}
+
+/**
  * parse standard cli arguments (process.argv slice) into options and positional args
  * returns null-prototype options dictionary (Object.create(null)) immune to __proto__ injection
  */

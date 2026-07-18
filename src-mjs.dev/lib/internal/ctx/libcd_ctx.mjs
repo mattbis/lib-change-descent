@@ -8,6 +8,9 @@
 // 2p
 import { invariant } from '../../libcd_invariant.mjs'
 import { arg_get_opt } from '../../arg/libcd_arg.mjs'
+import { LIBCD_VOLE_MASK, time_mask_get_duration_ms, time_mask_is_expired, time_mask_format } from '../../storage/libcd_volume.mjs'
+import { post } from '../imut_log/libcd_imut_log.mjs'
+import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs'
 
 /**
  * default buffer sizing and capacity bounds
@@ -15,7 +18,8 @@ import { arg_get_opt } from '../../arg/libcd_arg.mjs'
 export const LIBCD_CTX_DEFAULT= Object.freeze({
     change_graph_buckets: 1024,   // default number of scalar entropy buckets for visual output
     max_retries: 3,
-    default_profile: '+bg'
+    default_profile: '+bg',
+    default_time_mask: 0x10       // 3 years default config init per vole_mask_structure.md
 })
 
 /**
@@ -29,6 +33,7 @@ export function ctx_create(options= {}) {
     var profile= arg_get_opt(opts, 'profile', LIBCD_CTX_DEFAULT.default_profile) || LIBCD_CTX_DEFAULT.default_profile
     var max_retries= arg_get_opt(opts, 'max_retries', LIBCD_CTX_DEFAULT.max_retries) || LIBCD_CTX_DEFAULT.max_retries
     var graph_buckets= arg_get_opt(opts, 'change_graph_buckets', LIBCD_CTX_DEFAULT.change_graph_buckets) || LIBCD_CTX_DEFAULT.change_graph_buckets
+    var time_mask= arg_get_opt(opts, 'time_mask', LIBCD_CTX_DEFAULT.default_time_mask) || LIBCD_CTX_DEFAULT.default_time_mask
 
     // pre-allocate change graph entropy buffer (scalar float32 values [0.0 .. 1.0])
     // 0.0 = cold (no change); 1.0 = hot / high entropy (heavy node modification)
@@ -38,6 +43,9 @@ export function ctx_create(options= {}) {
         profile: profile,
         max_retries: max_retries,
         abort_flag: false,
+        time_mask: time_mask,
+        created_ts: Date.now(),
+        last_maintenance_ts: Date.now(),
         
         // null-prototype registry for mounted volume instances and worker references
         volumes: new Map(),
@@ -50,6 +58,13 @@ export function ctx_create(options= {}) {
             string_heap: arg_get_opt(opts, 'string_heap', null)
         })
     }
+
+    post(make_entry('SESSION', 'CTX_CREATE', {
+        profile: profile,
+        time_mask: time_mask,
+        time_mask_desc: time_mask_format(time_mask),
+        created_ts: ctx.created_ts
+    }))
 
     return ctx
 }
@@ -81,6 +96,46 @@ export function ctx_buffer(ctx, name, buffer_view= undefined) {
 }
 
 /**
+ * space-prefixed function: ctx_flags
+ * queries and logs full lifecycle execution and time mask flags ("reminded of this when you query flags()")
+ */
+export function ctx_flags(ctx) {
+    invariant(ctx && typeof ctx === 'object', 'valid context required')
+    var payload= {
+        profile: ctx.profile,
+        time_mask: ctx.time_mask,
+        time_ttl_ms: time_mask_get_duration_ms(ctx.time_mask),
+        time_mask_desc: time_mask_format(ctx.time_mask),
+        created_ts: ctx.created_ts,
+        expired: time_mask_is_expired(ctx.created_ts, ctx.time_mask),
+        volumes_count: ctx.volumes ? ctx.volumes.size : 0
+    }
+    post(make_entry('SESSION', 'FLAGS_QUERY', payload))
+    return payload
+}
+
+/**
+ * space-prefixed function: ctx_run_time_maintenance
+ * periodic maintenance hook compacting context buffers based on time_mask expiration
+ */
+export function ctx_run_time_maintenance(ctx) {
+    invariant(ctx && typeof ctx === 'object', 'valid context required')
+    var now= Date.now()
+    var is_expired= time_mask_is_expired(ctx.created_ts, ctx.time_mask)
+    if (is_expired && ctx.buffers && ctx.buffers.change_graph_buffer) {
+        ctx.buffers.change_graph_buffer.fill(0)
+    }
+    ctx.last_maintenance_ts= now
+    var payload= {
+        time_mask: ctx.time_mask,
+        compacted: is_expired,
+        last_maintenance_ts: now
+    }
+    post(make_entry('SESSION', 'TIME_MAINTENANCE_COMPACT', payload))
+    return payload
+}
+
+/**
  * Dual Surface Class Wrapper (`libcd_Context`):
  * thin object wrapper around `ctx_create` and `ctx_*` functional primitives.
  */
@@ -95,5 +150,13 @@ export class libcd_Context {
 
     buffer(name, buffer_view= undefined) {
         return ctx_buffer(this.ctx, name, buffer_view)
+    }
+
+    flags() {
+        return ctx_flags(this.ctx)
+    }
+
+    run_maintenance() {
+        return ctx_run_time_maintenance(this.ctx)
     }
 }
