@@ -1,5 +1,5 @@
 async function instantiate(module, imports = {}) {
-  const adaptedImports = {
+  var adaptedImports = {
     env: Object.assign(Object.create(globalThis), imports.env || {}, {
       abort(message, fileName, lineNumber, columnNumber) {
         // ~lib/builtins/abort(~lib/string/String | null?, ~lib/string/String | null?, u32?, u32?) => void
@@ -14,9 +14,9 @@ async function instantiate(module, imports = {}) {
       },
     }),
   };
-  const { exports } = await WebAssembly.instantiate(module, adaptedImports);
-  const memory = exports.memory || imports.env.memory;
-  const adaptedExports = Object.setPrototypeOf({
+  var { exports } = await WebAssembly.instantiate(module, adaptedImports);
+  var memory = exports.memory || imports.env.memory;
+  var adaptedExports = Object.setPrototypeOf({
     blake3(input) {
       // assembly/blake3/blake3(~lib/typedarray/Uint8Array) => ~lib/typedarray/Uint8Array
       input = __lowerTypedArray(Uint8Array, 6, 0, input) || __notnull();
@@ -49,10 +49,10 @@ async function instantiate(module, imports = {}) {
   }, exports);
   function __liftString(pointer) {
     if (!pointer) return null;
-    const
+    var
       end = pointer + new Uint32Array(memory.buffer)[pointer - 4 >>> 2] >>> 1,
       memoryU16 = new Uint16Array(memory.buffer);
-    let
+    var
       start = pointer >>> 1,
       string = "";
     while (end - start > 1024) string += String.fromCharCode(...memoryU16.subarray(start, start += 1024));
@@ -68,7 +68,7 @@ async function instantiate(module, imports = {}) {
   }
   function __lowerTypedArray(constructor, id, align, values) {
     if (values == null) return 0;
-    const
+    var
       length = values.length,
       buffer = exports.__pin(exports.__new(length << align, 1)) >>> 0,
       header = exports.__new(12, id) >>> 0;
@@ -80,10 +80,10 @@ async function instantiate(module, imports = {}) {
     return header;
   }
   class Internref extends Number {}
-  const registry = new FinalizationRegistry(__release);
+  var registry = new FinalizationRegistry(__release);
   function __liftInternref(pointer) {
     if (!pointer) return null;
-    const sentinel = new Internref(__retain(pointer));
+    var sentinel = new Internref(__retain(pointer));
     registry.register(sentinel, pointer);
     return sentinel;
   }
@@ -92,10 +92,10 @@ async function instantiate(module, imports = {}) {
     if (value instanceof Internref) return value.valueOf();
     throw TypeError("internref expected");
   }
-  const refcounts = new Map();
+  var refcounts = new Map();
   function __retain(pointer) {
     if (pointer) {
-      const refcount = refcounts.get(pointer);
+      var refcount = refcounts.get(pointer);
       if (refcount) refcounts.set(pointer, refcount + 1);
       else refcounts.set(exports.__pin(pointer), 1);
     }
@@ -103,7 +103,7 @@ async function instantiate(module, imports = {}) {
   }
   function __release(pointer) {
     if (pointer) {
-      const refcount = refcounts.get(pointer);
+      var refcount = refcounts.get(pointer);
       if (refcount === 1) exports.__unpin(pointer), refcounts.delete(pointer);
       else if (refcount) refcounts.set(pointer, refcount - 1);
       else throw Error(`invalid refcount '${refcount}' for reference '${pointer}'`);
@@ -112,7 +112,7 @@ async function instantiate(module, imports = {}) {
   function __notnull() {
     throw TypeError("value must not be null");
   }
-  let __dataview = new DataView(memory.buffer);
+  var __dataview = new DataView(memory.buffer);
   function __setU32(pointer, value) {
     try {
       __dataview.setUint32(pointer, value, true);
@@ -131,7 +131,7 @@ async function instantiate(module, imports = {}) {
   }
   return adaptedExports;
 }
-export const {
+export var {
   memory,
   blake3,
   blake3Hex,
@@ -140,7 +140,7 @@ export const {
   finalize,
 } = await (async url => instantiate(
   await (async () => {
-    const isNodeOrBun = typeof process != "undefined" && process.versions != null && (process.versions.node != null || process.versions.bun != null);
+    var isNodeOrBun = typeof process != "undefined" && process.versions != null && (process.versions.node != null || process.versions.bun != null);
     if (isNodeOrBun) { return globalThis.WebAssembly.compile(await (await import("node:fs/promises")).readFile(url)); }
     else { return await globalThis.WebAssembly.compileStreaming(globalThis.fetch(url)); }
   })(), {
