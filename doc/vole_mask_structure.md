@@ -1,21 +1,40 @@
 
 - the vole mask structure, contains bits for:-
 
-# acl mask
+# acl mask - for all functions
+
+in a resident scenario, the first thing is to discover the environment and what to monitor... the discovery stage.
+the acl is dynamically changed... its not possible to trigger a very expensive operation without a key stage, or 
+guaged lock being solved.
+
+- applied when `initialised` after setup initialisation will scan, it will probe the hardware and controllers... 
+- applied when `setup` 1. has been processed, 2. is allowed, and 3. to guage tree size.
+- applied when `setup` indicates a legacy device
+- 5. is applied during `setup` if the disk has nothing but system stuff in it .. TODO (matt): reduce work...
 
 1. can probe name and records
 2. can descend root
 3. can descend children
 4. must io is exclusive
+5. system only
 
-# read mask
+# read mask - for an op
 
+0. no resitrction, 4 still exists... since reads are inner grouped TODO (matt): we can easily soup into a mess of calls...
 1. can query root dirs
 2. can query root dirs children
 3. can seek node size
 4. is a vector this allows orders of magnitude and " size of work "
 
+# write mask - for an op
+
+0. no write restriction
+1. volatile buffer writes into chunks, and write in one go
+2. serial writes
+
 # speed mask
+
+- read and write obey the speed mask
 
 1. no restrictions
 2. careful ramp
