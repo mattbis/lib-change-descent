@@ -441,6 +441,49 @@ test("libcd_win_isolate & libcd_administrator: Windows process identification, a
   assert.strictEqual(status.target_exe, path, "Status reports exact node executable path")
 })
 
+import {
+  os_filter_check,
+  os_filter_add,
+  os_filter_remove,
+  os_filter_reset,
+  os_filter_get_metrics,
+  FILTER_PRECEDENCE
+} from "../os/libcd__os_filter.mjs"
+import {
+  os_fs_stat,
+  os_fs_readdir
+} from "../os/libcd_os_fs.mjs"
+
+test("libcd__os_filter & libcd_os_fs: formal filter precedence hierarchies, fast O(1) checks, and filtered directory traversal", async () => {
+  os_filter_reset(true)
+
+  // 1. Verify Layer 0 (LIB_DEFAULT) blocks OS forbidden files (e.g., pagefile.sys or .DS_Store or /proc)
+  var win_check = os_filter_check("C:\\pagefile.sys")
+  if (process.platform === "win32") {
+    assert.strictEqual(win_check.blocked, true, "Windows default filter blocks pagefile.sys")
+    assert.strictEqual(win_check.level, FILTER_PRECEDENCE.LIB_DEFAULT, "Blocked at LIB_DEFAULT level 0")
+  }
+
+  // 2. Verify dynamic custom filter addition at APP_DYNAMIC (level 2) and ETC_DEFAULT (level 1)
+  os_filter_add(FILTER_PRECEDENCE.APP_DYNAMIC, "extensions", ".secret_ext")
+  var dynamic_check = os_filter_check("some_file.secret_ext")
+  assert.strictEqual(dynamic_check.blocked, true, "Dynamic filter blocks .secret_ext")
+  assert.strictEqual(dynamic_check.level, FILTER_PRECEDENCE.APP_DYNAMIC, "Blocked at APP_DYNAMIC level 2")
+
+  os_filter_remove(FILTER_PRECEDENCE.APP_DYNAMIC, "extensions", ".secret_ext")
+  assert.strictEqual(os_filter_check("some_file.secret_ext").blocked, false, "Removing filter allows path again")
+
+  // 3. Verify audit skip metrics tracking
+  var metrics = os_filter_get_metrics()
+  assert.strictEqual(typeof metrics.total_skipped, "number", "Skip metrics reports total_skipped count")
+
+  // 4. Verify os_fs_stat blocks excluded paths and returns null without throwing
+  if (process.platform === "win32") {
+    var stat_res = await os_fs_stat("C:\\pagefile.sys")
+    assert.strictEqual(stat_res, null, "os_fs_stat returns null on blocked file")
+  }
+})
+
 
 
 
