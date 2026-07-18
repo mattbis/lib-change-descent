@@ -617,6 +617,82 @@ test("libcd__os_metadata & libcd_host: cross-OS volume history tracking, unknown
   assert.strictEqual(typeof manifest.os_manifest_hash, "number", "Computed float manifestation hash")
 })
 
+import {
+  gate_load_or_create_secret,
+  gate_generate_pin,
+  gate_verify_pin,
+  gate_verify_arg_modification,
+  gate_is_active,
+  libcd_Gate
+} from "../runtime/libcd_gate.mjs"
+import { LibCdBare, LibCdOp } from "../runtime/libcd_LibChangeDescent.0.mjs"
+import { local_run_lockdown_and_gate } from "../../../local/tool/libcd_local.mjs"
+import { join } from "node:path"
+import { existsSync, rmSync } from "node:fs"
+
+test("libcd_gate & libcd_local: cryptographic var/gate.secret PIN generation, +gate runtime arg guard, and local npm run --lockdown --gate orchestration", async () => {
+  var test_secret_path = join(process.cwd(), "var", "test_gate.secret")
+  var test_cmd_path = join(process.cwd(), "local", "sh", "test_resident.cmd")
+  if (existsSync(test_secret_path)) rmSync(test_secret_path)
+  if (existsSync(test_cmd_path)) rmSync(test_cmd_path)
+
+  // 1. Verify gate_load_or_create_secret creates high-entropy cryptographic secret inside var/
+  var secret = gate_load_or_create_secret(test_secret_path)
+  assert.strictEqual(typeof secret, "string")
+  assert.strictEqual(secret.length, 64, "Secret is 32-byte hex string (256 bits)")
+  assert.strictEqual(existsSync(test_secret_path), true, "Stored cryptographically inside var location")
+
+  // 2. Verify PIN generation and constant-time verification
+  var pin = gate_generate_pin(secret)
+  assert.strictEqual(typeof pin, "string")
+  assert.strictEqual(pin.length, 6, "PIN is exactly 6 digits")
+  assert.strictEqual(gate_verify_pin(secret, pin), true, "Generated PIN verifies successfully against secret")
+  assert.strictEqual(gate_verify_pin(secret, "000000"), false, "Invalid PIN rejected cleanly")
+
+  // 3. Verify gate_is_active detection across profile strings and option maps
+  assert.strictEqual(gate_is_active("+gate -bg"), true)
+  assert.strictEqual(gate_is_active({ gate: true }), true)
+  assert.strictEqual(gate_is_active({ profile: "+gate +resident" }), true)
+  assert.strictEqual(gate_is_active("-bg +fg"), false)
+
+  // 4. Verify gate_verify_arg_modification throws when +gate is active and PIN is missing/wrong
+  assert.throws(() => {
+    gate_verify_arg_modification({ "+gate": true }, null, test_secret_path)
+  }, /\[GATE\] Authorization failure/, "+gate blocks argument modification without valid PIN")
+
+  assert.throws(() => {
+    gate_verify_arg_modification({ "+gate": true, pin: "999999" }, null, test_secret_path)
+  }, /\[GATE\] Authorization failure/, "+gate blocks argument modification with wrong PIN")
+
+  // Verify successful pass with valid PIN
+  var ver_res = gate_verify_arg_modification({ "+gate": true, pin: pin }, null, test_secret_path)
+  assert.strictEqual(ver_res.verified, true, "Valid PIN unlocks +gate process modification")
+
+  // 5. Verify LibCdBare and LibCdOp runtime bundles enforce +gate and allow PIN-validated modifications
+  var bare = new LibCdBare({ profile: "+gate +resident", pin: pin, secret_path: test_secret_path })
+  assert.strictEqual(bare.options.profile.includes("+gate"), true)
+  assert.throws(() => {
+    bare.modify_args({ profile: "+fg" }, { secret_path: test_secret_path }) // missing pin
+  }, /\[GATE\] Authorization failure/, "modify_args guarded by +gate pin check")
+
+  var modified = bare.modify_args({ profile: "+fg" }, { pin: pin, secret_path: test_secret_path })
+  assert.strictEqual(modified.fg, true, "PIN authorized modify_args successfully changed profile")
+
+  // 6. Verify local_run_lockdown_and_gate orchestration (`npm run local -- --lockdown --gate --pin <pin>`)
+  var local_res = await local_run_lockdown_and_gate({
+    lockdown: true,
+    gate: true,
+    pin: pin,
+    out: test_cmd_path,
+    secret_path: test_secret_path
+  })
+  assert.strictEqual(local_res.status, "authorized")
+  assert.strictEqual(existsSync(test_cmd_path), true, "gen_lockdown generated resident cmd file")
+
+  if (existsSync(test_secret_path)) rmSync(test_secret_path)
+  if (existsSync(test_cmd_path)) rmSync(test_cmd_path)
+})
+
 
 
 

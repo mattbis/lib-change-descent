@@ -138,6 +138,12 @@ export function arg_parse_profile(profile_arg= '+bg', options= {}) {
         nolimits= true
     }
 
+    var gate= arg_get_opt(parsed_opts, 'gate', false) || parsed_opts['+gate'] === true || parsed_opts['--gate'] === true || profile_str.includes('+gate') || profile_str.includes('--gate')
+    if (gate) {
+        parsed_opts.gate= true
+        parsed_opts['+gate']= true
+    }
+
     var yield_ms= 10
     if (nolimits) {
         yield_ms= 0
@@ -156,6 +162,7 @@ export function arg_parse_profile(profile_arg= '+bg', options= {}) {
         resident: resident,
         start: start,
         nolimits: nolimits,
+        gate: gate,
         yield_ms: yield_ms,
         options: parsed_opts
     })

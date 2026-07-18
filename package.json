@@ -16,6 +16,8 @@
     "lint": "eslint src-mjs.dev",
     "format": "prettier --write .",
     "dev": "node --watch src-mjs.dev/main/libcd_main.mjs",
+    "local": "node local/tool/libcd_local.mjs",
+    "lockdown": "node local/tool/libcd_local.mjs --lockdown",
     "self_check": "node --test src-mjs.dev/lib/test/libcd_self_check.0.mjs"
   }
 }

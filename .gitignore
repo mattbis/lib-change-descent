@@ -3,3 +3,5 @@ var/build
 doc/.ai
 local/.secret
 var/*.lock
+var/*.secret
+local/sh/*.cmd
