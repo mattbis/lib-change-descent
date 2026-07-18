@@ -1,5 +1,6 @@
 ### mostly mjs at the moment
 
+- prefer single quotes, double quotes are used for magical situations
 - resident process hardening & defensive coding (see `doc/security.md`):
   - dictionaries and string/path caches must use `Object.create(null)` or `new Map()`, never plain `{}`.
   - exported constant tables, protocol enums (`PROTOCOL_OP`), and vole masks must be frozen with `Object.freeze()`.
