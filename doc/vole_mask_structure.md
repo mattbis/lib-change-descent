@@ -26,10 +26,10 @@
 
 1. missing
 2. present
-3. busy ( 2+1 )
+3. busy ( 2+ 4|5|6 )
 4. read
 5. write
-6. maintain
+6. maintain // means its doing someting the user didn't request, for example imprinting...
 
 # history mask
 
