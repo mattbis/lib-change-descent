@@ -60,3 +60,17 @@ If generating a unified bundle for production deployment (`var/build/libcd_bundl
 "Object.freeze(Object.prototype); Object.freeze(Array.prototype);"
 ```
 Freezing `Object.prototype` globally across the Isolate right at startup prevents any script within that compartment from mutating global prototypes, complementing our native source defenses cleanly.
+
+---
+
+## 5. Why `var` is Safe & Why We Keep Code Lockdown with Boot-Time `--frozen-intrinsics`
+
+While some modern coding guidelines discourage **`var`** due to block-scoping concerns (`let`/`const`), `lib-change-descent` deliberately uses `var` across local functions and loops (`var i = 0`) for **mechanical sympathy**:
+1. **Zero Temporal Dead Zone (`TDZ`):** Unlike `let`/`const`, `var` loop counters do not generate runtime TDZ initialization checks on every loop iteration inside V8 TurboFan, delivering unboxed C-like execution speed.
+2. **ES Modules (`.mjs`) Scoping:** In Node.js ES Modules (`.mjs`), `var` statements are function- or module-scoped by definition. They **never leak** to `globalThis` (`window` or `global`), completely eliminating the historical scope pollution issues of browser script tags.
+
+### Defense in Depth: Why Keep Code Lockdown (`Object.create(null)`) Alongside Boot Lockdown?
+Even when Node.js boot lockdown (`node --frozen-intrinsics` generated via `local/tool/gen_lockdown_nodejs.mjs`) is enabled:
+* `--frozen-intrinsics` stops properties from being injected globally into `Object.prototype`.
+* However, normal property accesses (`opts.max_retries`) on standard objects (`{}`) still traverse up their own prototype chain and inherit built-in methods (`toString`, `valueOf`).
+* By combining **boot-time `--frozen-intrinsics`** with our **in-code defensive practices (`Object.create(null)`, `Object.hasOwn`, and `arg_get_opt`)**, we guarantee that dictionary lookups execute with $O(1)$ direct key matching while the entire V8 runtime remains sealed at ring 0.
