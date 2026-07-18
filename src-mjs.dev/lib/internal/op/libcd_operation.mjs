@@ -1,5 +1,6 @@
 // triggers very important things - even if not with `+start` and `+resident`
 
+// 2p
 import { run_pre_op_check, run_self_check } from '../self_check/libcd_self_check.mjs'
 
 // factors of mod controlled micro pause.... 

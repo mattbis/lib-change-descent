@@ -57,3 +57,11 @@
 - group functions by the topic ( ie usually the folder they live in ) - and the name of the file
 
 - prefer `descenthash_compute_single()` instead of `compute_single_hash()` this makes searching for a group much easier
+
+## import denotation (1p / 2p / 3p)
+
+- imports across our modules must be categorized and clearly denoted using `// 1p`, `// 2p`, and `// 3p` comments above import groups:
+- `// 1p` (first-party): built-in runtime modules (`node:fs`, `node:path`, `node:test`, `node:assert`, etc.).
+- `// 2p` (second-party): imports from our own library codebase (`../self_check/libcd_self_check.mjs`, `../storage/libcd_volume.mjs`, etc.).
+- `// 3p` (third-party): static external packages vendored and checked directly into our repository under `3p/` (e.g., `../3p/hugging-face-blake3-wasm/...`).
+
