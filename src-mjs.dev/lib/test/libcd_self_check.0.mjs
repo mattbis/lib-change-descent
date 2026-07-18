@@ -255,6 +255,53 @@ test("libcd_volume & lib/hardware: active/known unique volume registries and har
   assert.strictEqual(hardware_controller_get_known_ids().size, 2, "Known unique IDs history preserved after active unmount")
 })
 
+import {
+  arg_slice_compare_fast,
+  arg_slice_compare_secure_raw,
+  arg_slice_compare_secure,
+  arg_parse_binary_header,
+  arg_parse_cli
+} from "../arg/libcd_arg.mjs"
+import { libcd_ArgParser } from "../arg/libcd_ArgParser.mjs"
+
+test("libcd_arg: fast/secure slice comparators, binary header parsing, and dual surface CLI arg parser", () => {
+  // 1. Verify fast zero-GC slice comparator
+  var buf_a = new Uint8Array([0xCD, 0xCD, 0x01, 0x02, 0x03])
+  var buf_b = new Uint8Array([0x00, 0xCD, 0xCD, 0x01, 0xFF])
+  assert.strictEqual(arg_slice_compare_fast(buf_a, 0, buf_b, 1, 3), true, "Fast slice match across offsets 0 and 1")
+  assert.strictEqual(arg_slice_compare_fast(buf_a, 0, buf_b, 1, 4), false, "Fast slice mismatch at 4th byte")
+
+  // 2. Verify secure raw XOR accumulator inside uint8 bounds
+  assert.strictEqual(arg_slice_compare_secure_raw(buf_a, 0, buf_b, 1, 3), true, "Secure raw accumulator matches identical slices")
+  assert.strictEqual(arg_slice_compare_secure_raw(buf_a, 0, buf_b, 1, 4), false, "Secure raw accumulator detects byte difference")
+
+  // 3. Verify node crypto timingSafeEqual wrapper
+  var full_1 = new Uint8Array([10, 20, 30])
+  var full_2 = new Uint8Array([10, 20, 30])
+  var full_3 = new Uint8Array([10, 20, 31])
+  assert.strictEqual(arg_slice_compare_secure(full_1, full_2), true, "timingSafeEqual matches exact equal arrays")
+  assert.strictEqual(arg_slice_compare_secure(full_1, full_3), false, "timingSafeEqual detects mismatch")
+
+  // 4. Verify binary magic header checking
+  var magic = new Uint8Array([0xCD, 0xCD])
+  assert.strictEqual(arg_parse_binary_header(buf_a, 0, magic), true, "Binary header match at offset 0")
+  assert.strictEqual(arg_parse_binary_header(buf_b, 1, magic), true, "Binary header match at offset 1")
+
+  // 5. Verify CLI arg parsing via functional and class wrapper surfaces
+  var dummy_argv = ["--verbose", "--threads=4", "-D", "C:\\Data"]
+  var parsed_func = arg_parse_cli(dummy_argv)
+  assert.strictEqual(parsed_func.options.verbose, true)
+  assert.strictEqual(parsed_func.options.threads, "4")
+  assert.strictEqual(parsed_func.options.D, true)
+  assert.deepStrictEqual(parsed_func.positionals, ["C:\\Data"])
+
+  var parser = new libcd_ArgParser(dummy_argv)
+  var parsed_class = parser.parse_cli()
+  assert.deepStrictEqual(parsed_class, parsed_func, "Dual surface class wrapper delegates exactly to functional primitive")
+  assert.strictEqual(parser.compare_fast(buf_a, 0, buf_b, 1, 3), true, "Class wrapper fast comparison works")
+})
+
+
 
 
 
