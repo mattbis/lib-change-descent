@@ -418,6 +418,29 @@ test("libcd_assert_vol_id: verifies removable and added_by_default volumes maint
   assert.strictEqual(assert_polling_disk_vol_ids(), true, "Polling across active imprinted volumes passes cleanly")
 })
 
+import { win_is_administrator } from "../os/win/libcd_administrator.mjs"
+import { win_get_node_process_path, win_get_isolation_status } from "../os/win/libcd_win_isolate.mjs"
+
+test("libcd_win_isolate & libcd_administrator: Windows process identification, admin check, and WFP firewall isolation status", () => {
+  if (process.platform !== "win32") {
+    return
+  }
+
+  // 1. Verify we can correctly identify the node executable path
+  var path= win_get_node_process_path()
+  assert.strictEqual(typeof path, "string", "Node process path is resolved as a string")
+  assert.strictEqual(path.length > 0, true, "Node process path is non-empty")
+
+  // 2. Verify admin privilege check completes cleanly without throwing
+  var is_admin= win_is_administrator()
+  assert.strictEqual(typeof is_admin, "boolean", "Admin status returns a boolean")
+
+  // 3. Verify status inspection returns expected shape
+  var status= win_get_isolation_status()
+  assert.strictEqual(typeof status.isolated, "boolean", "Isolation status returns a boolean flag")
+  assert.strictEqual(status.target_exe, path, "Status reports exact node executable path")
+})
+
 
 
 

@@ -6,8 +6,8 @@
  */
 
 import { spawn } from 'node:child_process';
-import { post } from '../imut_log/libcd_imut_log.mjs';
-import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs';
+import { post } from '../internal/imut_log/libcd_imut_log.mjs';
+import { make_entry } from '../internal/imut_log/libcd_imut_log_entry.mjs';
 
 /**
  * Spawns the native Zig journal reader subprocess and monitors volume changes.
