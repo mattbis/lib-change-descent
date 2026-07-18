@@ -43,3 +43,6 @@ export class LibCdOp extends LibCdBare {
     }
 }
 
+/** session enabled ctor that then allows context switching or single usage with resume protection */
+export class LibCdSession extends LibCdBare {
+}
