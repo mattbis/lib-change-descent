@@ -88,8 +88,9 @@ Instead of `operation_run_pipeline(ctx, [pre_check, scan_dir, hash_nodes, post_c
 
 ### C. Layered Security & Build Modifiers (`var/build`)
 When generating standalone or public production bundles (`var/build`), a **Build Modifier** acts as the meta-compiler:
-* It wraps compiled core loops in outer isolate freeze barriers (`esbuild --banner:js`).
-* It conditionally injects Windows Filtering Platform (`WFP`) network isolation checks (`lib/os/win/libcd_win.mjs`) or `+gate` cryptographic challenge requirements only where process boundary transitions occur.
+* **Obfuscation & Isolate Sealing:** It minifies, obfuscates, and seals compiled core loops (`esbuild --banner:js` with `Object.freeze` banners) so resident bundles running under `+gate` cannot be inspected or tampered with by unauthorized local processes.
+* **Internal AST Pathway Hashing (`gate_verify_bundle_integrity`):** Each compiled pathway aspect (`or production bundle slice`) is fingerprinted (`gate_compute_pathway_hash`) and stored inside `var/gate.bundle.hash` (`or `--gen-bundle-hash`). When the local runner or resident bootstrapper (`npm run local` / `libcd_local.mjs`) starts up, it automatically verifies that the running bundle's internal AST pathway hash matches the expected production fingerprint (`--verify-bundle`), instantly rejecting execution if disk tampering or modification is detected.
+* **Boundary Guarding:** It conditionally injects Windows Filtering Platform (`WFP`) network isolation checks (`lib/os/win/libcd_win.mjs`) or `+gate` cryptographic challenge requirements only where process boundary transitions occur.
 
 ---
 

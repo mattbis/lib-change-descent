@@ -622,13 +622,15 @@ import {
   gate_generate_pin,
   gate_verify_pin,
   gate_verify_arg_modification,
+  gate_compute_pathway_hash,
+  gate_verify_bundle_integrity,
   gate_is_active,
   libcd_Gate
 } from "../runtime/libcd_gate.mjs"
 import { LibCdBare, LibCdOp, LibCdSession } from "../runtime/libcd_LibChangeDescent.0.mjs"
 import { local_run_lockdown_and_gate } from "../../../local/tool/libcd_local.mjs"
 import { join } from "node:path"
-import { existsSync, rmSync } from "node:fs"
+import { existsSync, rmSync, writeFileSync } from "node:fs"
 
 test("libcd_gate & libcd_local: cryptographic var/gate.secret PIN generation, +gate runtime arg guard, and local npm run --lockdown --gate orchestration", async () => {
   var test_secret_path = join(process.cwd(), "var", "test_gate.secret")
@@ -689,8 +691,45 @@ test("libcd_gate & libcd_local: cryptographic var/gate.secret PIN generation, +g
   assert.strictEqual(local_res.status, "authorized")
   assert.strictEqual(existsSync(test_cmd_path), true, "gen_lockdown generated resident cmd file")
 
+  // 7. Verify bundle AST pathway hashing (`gate_compute_pathway_hash`) and integrity check (`gate_verify_bundle_integrity`)
+  var test_bundle_path = join(process.cwd(), "var", "test_bundle.mjs")
+  var test_hash_path = join(process.cwd(), "var", "test_bundle.hash")
+  if (existsSync(test_bundle_path)) rmSync(test_bundle_path)
+  if (existsSync(test_hash_path)) rmSync(test_hash_path)
+
+  var sample_ast_code = "/* obfuscated gated bundle */ export const compiled_pathway = () => 0xCDCD;"
+  writeFileSync(test_bundle_path, sample_ast_code, "utf8")
+
+  var computed_hash = gate_compute_pathway_hash(test_bundle_path)
+  assert.strictEqual(typeof computed_hash, "string")
+  assert.strictEqual(computed_hash.length, 64, "SHA-256 hex string is 64 characters")
+
+  writeFileSync(test_hash_path, computed_hash, "utf8")
+  var ver_bundle = gate_verify_bundle_integrity(test_bundle_path, test_hash_path)
+  assert.strictEqual(ver_bundle.status, "verified_integrity")
+  assert.strictEqual(ver_bundle.hash, computed_hash)
+
+  // Verify dual surface libcd_Gate class wrappers for bundle integrity
+  var gate_obj = new libcd_Gate({ bundle_hash_path: test_hash_path })
+  assert.strictEqual(gate_obj.compute_pathway_hash(test_bundle_path), computed_hash)
+  assert.strictEqual(gate_obj.verify_bundle_integrity(test_bundle_path).status, "verified_integrity")
+
+  // Verify that tampering with bundle pathway code immediately throws integrity violation
+  writeFileSync(test_bundle_path, sample_ast_code + " // tampered code injection", "utf8")
+  assert.throws(() => {
+    gate_verify_bundle_integrity(test_bundle_path, test_hash_path)
+  }, /\[GATE\] Integrity failure: Bundle AST pathway hash mismatch/, "Tampering detected cleanly on modified bundle AST")
+
+  // Verify local tool orchestration for gen_bundle_hash and verify_bundle
+  await local_run_lockdown_and_gate({ gen_bundle_hash: test_bundle_path, bundle_hash_path: test_hash_path })
+  assert.strictEqual(existsSync(test_hash_path), true)
+  var new_hash = gate_compute_pathway_hash(test_bundle_path)
+  await local_run_lockdown_and_gate({ verify_bundle: test_bundle_path, bundle_hash_path: test_hash_path })
+
   if (existsSync(test_secret_path)) rmSync(test_secret_path)
   if (existsSync(test_cmd_path)) rmSync(test_cmd_path)
+  if (existsSync(test_bundle_path)) rmSync(test_bundle_path)
+  if (existsSync(test_hash_path)) rmSync(test_hash_path)
 })
 
 test("LibCdSession & libcd_session: +session profile detection, context switching, and zero-GC resume checkpointing", () => {

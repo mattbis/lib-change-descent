@@ -20,6 +20,8 @@ import {
     gate_load_or_create_secret,
     gate_generate_pin,
     gate_verify_arg_modification,
+    gate_compute_pathway_hash,
+    gate_verify_bundle_integrity,
     gate_is_active,
     LIBCD_GATE_CONFIG
 } from '../../src-mjs.dev/lib/runtime/libcd_gate.mjs'
@@ -28,6 +30,23 @@ export async function local_run_lockdown_and_gate(options= {}) {
     var opts= options || {}
     var lockdown_active= arg_get_opt(opts, 'lockdown', true) || opts['+lockdown'] === true
     var gate_active= gate_is_active(opts) || arg_get_opt(opts, 'gate', false) === true
+
+    var gen_target= arg_get_opt(opts, 'gen_bundle_hash', arg_get_opt(opts, 'gen-bundle-hash', null))
+    if (gen_target) {
+        var hash_val= gate_compute_pathway_hash(String(gen_target))
+        var out_hash= arg_get_opt(opts, 'bundle_hash_path', arg_get_opt(opts, 'bundle-hash-path', LIBCD_GATE_CONFIG.bundle_hash_path))
+        var out_dir= dirname(out_hash)
+        if (!existsSync(out_dir)) mkdirSync(out_dir, { recursive: true })
+        writeFileSync(out_hash, hash_val, { encoding: 'utf8', mode: 0o644 })
+        process.stdout.write('[GATE] Generated AST pathway fingerprint for bundle (`' + gen_target + '` -> ' + hash_val + '). Stored in `' + out_hash + '`.\n')
+    }
+
+    var verify_target= arg_get_opt(opts, 'verify_bundle', arg_get_opt(opts, 'verify-bundle', null))
+    if (verify_target) {
+        var expected_path= arg_get_opt(opts, 'expected_hash', arg_get_opt(opts, 'bundle_hash_path', LIBCD_GATE_CONFIG.bundle_hash_path))
+        var ver_res= gate_verify_bundle_integrity(String(verify_target), expected_path)
+        process.stdout.write('[GATE] Verified bundle AST pathway integrity (`' + verify_target + '` matches SHA-256 fingerprint ' + ver_res.hash + ').\n')
+    }
 
     if (lockdown_active) {
         var script_content= gen_lockdown_script(opts)

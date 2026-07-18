@@ -14,7 +14,7 @@ Given the core operational nature of this library—executing unified system pro
 ### Composable Security & Build Modifiers
 Rather than baking heavy runtime security checks directly into our low-level data accessors (`NODE_STRIDE` / struct offsets), we separate **Core Execution Constructs** from **Layered Security Protections** (detailed in **[composable_architecture.md](composable_architecture.md)**):
 * **Core Constructs (`Dynamic Function Composition / String Trick`):** Pure, unboxed, monomorphic functional blocks compiled dynamically via `new Function('ctx', ...)` to eliminate intermediate stack frames and context switching costs.
-* **Build Modifiers (`var/build` & Higher-Order Wrappers):** When deploying across untrusted boundaries or bundling resident isolates, a **Build Modifier** dynamically composes and layers security features on top of the core constructs (e.g., injecting `esbuild` global freeze banners, applying WFP ring-0 network isolation wrappers, or enforcing boundary object sealing).
+* **Build Modifiers (`var/build` & Higher-Order Wrappers):** When deploying across untrusted boundaries or bundling resident isolates, a **Build Modifier** dynamically composes and layers security features on top of the core constructs (e.g., injecting `esbuild` global freeze banners, minifying/obfuscating gated bundles, applying WFP ring-0 network isolation wrappers, enforcing boundary object sealing, and verifying internal AST pathway fingerprints via `gate_verify_bundle_integrity` right when `npm run local` boots).
 
 ---
 
