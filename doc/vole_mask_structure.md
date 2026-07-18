@@ -12,11 +12,19 @@ guaged lock being solved.
 - applied when `setup` indicates a legacy device
 - 5. is applied during `setup` if the disk has nothing but system stuff in it .. TODO (matt): reduce work...
 
-1. can probe name and records
-2. can descend root
-3. can descend children
-4. must io is exclusive
-5. system only
+0. system only
+1. private
+2. writable
+3. readable
+4. statable
+5. can probe name
+6. can probe attrib
+7. can probe sec mask
+8. can probe os tool
+9. can descend root - required for read
+10. can descend children - required for read
+11. must io is exclusive
+12. system only
 
 # read mask - for an op
 
