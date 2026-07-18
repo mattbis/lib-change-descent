@@ -144,6 +144,14 @@ export function arg_parse_profile(profile_arg= '+bg', options= {}) {
         parsed_opts['+gate']= true
     }
 
+    var session= arg_get_opt(parsed_opts, 'session', false)
+    if (parsed_opts['-session'] === true || profile_str.includes('-session')) session= false
+    else if (parsed_opts['+session'] === true || profile_str.includes('+session')) session= true
+    if (session) {
+        parsed_opts.session= true
+        parsed_opts['+session']= true
+    }
+
     var yield_ms= 10
     if (nolimits) {
         yield_ms= 0
@@ -163,6 +171,7 @@ export function arg_parse_profile(profile_arg= '+bg', options= {}) {
         start: start,
         nolimits: nolimits,
         gate: gate,
+        session: session,
         yield_ms: yield_ms,
         options: parsed_opts
     })

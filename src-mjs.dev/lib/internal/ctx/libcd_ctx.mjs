@@ -11,6 +11,7 @@ import { arg_get_opt } from '../../arg/libcd_arg.mjs'
 import { LIBCD_VOLE_MASK, time_mask_get_duration_ms, time_mask_is_expired, time_mask_format } from '../../storage/libcd_volume.mjs'
 import { post } from '../imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../imut_log/libcd_imut_log_entry.mjs'
+import { session_init_for_context, session_validate_for_context, session_checkpoint_for_context } from '../../session/libcd_session.mjs'
 
 /**
  * default buffer sizing and capacity bounds
@@ -56,13 +57,20 @@ export function ctx_create(options= {}) {
             control_buffer: arg_get_opt(opts, 'control_buffer', null),
             node_buffer: arg_get_opt(opts, 'node_buffer', null),
             string_heap: arg_get_opt(opts, 'string_heap', null)
-        })
+        }),
+        session: null
+    }
+
+    var session_active= arg_get_opt(opts, 'session', false) || opts['+session'] === true || (typeof profile === 'string' && profile.includes('+session'))
+    if (session_active) {
+        session_init_for_context(ctx, opts)
     }
 
     post(make_entry('SESSION', 'CTX_CREATE', {
         profile: profile,
         time_mask: time_mask,
         time_mask_desc: time_mask_format(time_mask),
+        session_active: Boolean(ctx.session),
         created_ts: ctx.created_ts
     }))
 
@@ -108,6 +116,7 @@ export function ctx_flags(ctx) {
         time_mask_desc: time_mask_format(ctx.time_mask),
         created_ts: ctx.created_ts,
         expired: time_mask_is_expired(ctx.created_ts, ctx.time_mask),
+        session_active: Boolean(ctx.session),
         volumes_count: ctx.volumes ? ctx.volumes.size : 0
     }
     post(make_entry('SESSION', 'FLAGS_QUERY', payload))
@@ -158,5 +167,17 @@ export class libcd_Context {
 
     run_maintenance() {
         return ctx_run_time_maintenance(this.ctx)
+    }
+
+    session_init(options= {}) {
+        return session_init_for_context(this.ctx, options)
+    }
+
+    session_validate() {
+        return session_validate_for_context(this.ctx)
+    }
+
+    session_checkpoint(flags= 0) {
+        return session_checkpoint_for_context(this.ctx, flags)
     }
 }

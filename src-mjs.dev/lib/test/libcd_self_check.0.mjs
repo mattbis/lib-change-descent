@@ -625,7 +625,7 @@ import {
   gate_is_active,
   libcd_Gate
 } from "../runtime/libcd_gate.mjs"
-import { LibCdBare, LibCdOp } from "../runtime/libcd_LibChangeDescent.0.mjs"
+import { LibCdBare, LibCdOp, LibCdSession } from "../runtime/libcd_LibChangeDescent.0.mjs"
 import { local_run_lockdown_and_gate } from "../../../local/tool/libcd_local.mjs"
 import { join } from "node:path"
 import { existsSync, rmSync } from "node:fs"
@@ -691,6 +691,40 @@ test("libcd_gate & libcd_local: cryptographic var/gate.secret PIN generation, +g
 
   if (existsSync(test_secret_path)) rmSync(test_secret_path)
   if (existsSync(test_cmd_path)) rmSync(test_cmd_path)
+})
+
+test("LibCdSession & libcd_session: +session profile detection, context switching, and zero-GC resume checkpointing", () => {
+  // 1. Verify LibCdSession initializes default context with +session active and session boundary mounted
+  var sess = new LibCdSession({ profile: "+bg" })
+  assert.strictEqual(sess.options.profile.includes("+session"), true, "LibCdSession prepends +session to profile")
+  assert.strictEqual(sess.options.session, true, "Options session flag enabled")
+  assert.strictEqual(sess.context().profile.includes("+session"), true, "Context profile inherits +session")
+  assert.strictEqual(typeof sess.context().session, "object", "Context session boundary mounted cleanly")
+  assert.strictEqual(sess.context().session.active, true, "Session marked active inside context")
+
+  // 2. Verify validation and checkpointing on active session
+  var meta = sess.session_validate()
+  assert.strictEqual(meta.version, 1, "Session header reports version 1")
+  assert.strictEqual(meta.node_count, 1024, "Default node count in header")
+
+  var chk = sess.session_checkpoint(0x118cd)
+  assert.strictEqual(chk.flags, 0x118cd, "Checkpoint records custom flags")
+  assert.strictEqual(typeof chk.ts, "number", "Checkpoint records epoch timestamp")
+
+  // 3. Verify context_switch creates isolated execution contexts and maintains session registry
+  assert.deepStrictEqual(sess.list_contexts(), ["default"], "Initial context list has default only")
+  
+  var worker_ctx = sess.context_switch("worker_pool_1", { profile: "+fg" })
+  assert.strictEqual(sess.active_context_id, "worker_pool_1", "Active context ID switched to worker_pool_1")
+  assert.strictEqual(worker_ctx.profile.includes("+session"), true, "Switched context maintains +session")
+  assert.strictEqual(worker_ctx.profile.includes("+fg"), true, "Switched context uses requested profile")
+  assert.notStrictEqual(worker_ctx, sess.contexts.get("default"), "Switched context is isolated from default context")
+  assert.strictEqual(sess.list_contexts().length, 2, "List contexts tracks all mounted sessions")
+
+  // 4. Verify switching back restores original context and session state without corruption
+  var restored_default = sess.context_switch("default")
+  assert.strictEqual(sess.active_context_id, "default")
+  assert.strictEqual(restored_default.session.last_checkpoint_ts, chk.ts, "Original session checkpoint preserved intact across switch")
 })
 
 
