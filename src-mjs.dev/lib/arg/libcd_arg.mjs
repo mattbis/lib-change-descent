@@ -66,27 +66,109 @@ export function arg_get_opt(opts, key, default_val= null) {
 
 /**
  * space-prefixed function: arg_parse_profile
- * parses execution profiles (`+resident`, `+bg`, `+fg`, `-nolimits`) and attaches time mask configuration (`default 3 years 0x10`)
+ * parses execution profiles and opposite profile modifiers (`+bg`, `-bg`, `+fg`, `-fg`, `+start`, `-start`, `+resident`, `-resident`, `-nolimits`)
+ * and attaches time mask configuration (`default 3 years 0x10`)
  */
 export function arg_parse_profile(profile_arg= '+bg', options= {}) {
-    var profile= typeof profile_arg === 'string' ? profile_arg : '+bg'
-    var time_mask= arg_get_opt(options, 'time_mask', 0x10) || 0x10 // default config init: 3 years per time mask doc
-    
+    var profile_str= ''
+    var parsed_opts= Object.create(null)
+    if (options && typeof options === 'object') {
+        Object.assign(parsed_opts, options)
+    }
+
+    if (typeof profile_arg === 'string') {
+        profile_str= profile_arg
+        var tokens= profile_arg.split(/\s+/)
+        var i= 0
+        while (i < tokens.length) {
+            var tok= tokens[i]
+            if (tok.startsWith('+') && tok.length > 1) {
+                parsed_opts[tok]= true
+                parsed_opts[tok.slice(1)]= true
+            } else if (tok.startsWith('-') && tok.length > 1 && !tok.startsWith('--')) {
+                parsed_opts[tok]= true
+                parsed_opts[tok.slice(1)]= false
+            }
+            i= i + 1
+        }
+    } else if (Array.isArray(profile_arg)) {
+        profile_str= profile_arg.join(' ')
+        var i= 0
+        while (i < profile_arg.length) {
+            var tok= profile_arg[i]
+            if (typeof tok === 'string') {
+                if (tok.startsWith('+') && tok.length > 1) {
+                    parsed_opts[tok]= true
+                    parsed_opts[tok.slice(1)]= true
+                } else if (tok.startsWith('-') && tok.length > 1 && !tok.startsWith('--')) {
+                    parsed_opts[tok]= true
+                    parsed_opts[tok.slice(1)]= false
+                }
+            }
+            i= i + 1
+        }
+    } else if (profile_arg && typeof profile_arg === 'object') {
+        Object.assign(parsed_opts, profile_arg)
+        profile_str= parsed_opts.profile || '+bg'
+    } else {
+        profile_str= '+bg'
+    }
+
+    var time_mask= arg_get_opt(options, 'time_mask', arg_get_opt(parsed_opts, 'time_mask', 0x10)) || 0x10
+
+    // Resolve profile modifier states and opposites (`-bg opposite -> bg false; -fg opposite -> fg false; -start opposite -> start false`)
+    var bg= arg_get_opt(parsed_opts, 'bg', true)
+    if (parsed_opts['-bg'] === true) bg= false
+    else if (parsed_opts['+bg'] === true || profile_str.includes('+bg')) bg= true
+
+    var fg= arg_get_opt(parsed_opts, 'fg', false)
+    if (parsed_opts['-fg'] === true) fg= false
+    else if (parsed_opts['+fg'] === true || profile_str.includes('+fg')) fg= true
+
+    var resident= arg_get_opt(parsed_opts, 'resident', false)
+    if (parsed_opts['-resident'] === true) resident= false
+    else if (parsed_opts['+resident'] === true || profile_str.includes('+resident')) resident= true
+
+    var start= arg_get_opt(parsed_opts, 'start', null)
+    if (parsed_opts['-start'] === true || profile_str.includes('-start')) start= false
+    else if (parsed_opts['+start'] === true || profile_str.includes('+start')) start= true
+
+    var nolimits= arg_get_opt(parsed_opts, 'nolimits', false)
+    if (parsed_opts['-nolimits'] === true || parsed_opts['+nolimits'] === true || profile_str.includes('-nolimits') || profile_str.includes('+nolimits')) {
+        nolimits= true
+    }
+
+    var yield_ms= 10
+    if (nolimits) {
+        yield_ms= 0
+    } else if (fg === true || bg === false) {
+        yield_ms= 1
+    } else if (bg === true || fg === false) {
+        yield_ms= 10
+    }
+
     return Object.assign(Object.create(null), {
-        profile: profile,
+        profile: profile_str,
         time_mask: time_mask,
         periodic_maintenance: true,
-        yield_ms: profile === '+fg' ? 1 : (profile === '-nolimits' ? 0 : 10)
+        bg: bg,
+        fg: fg,
+        resident: resident,
+        start: start,
+        nolimits: nolimits,
+        yield_ms: yield_ms,
+        options: parsed_opts
     })
 }
 
 /**
- * parse standard cli arguments (process.argv slice) into options and positional args
- * returns null-prototype options dictionary (Object.create(null)) immune to __proto__ injection
+ * parse standard cli arguments (process.argv slice) into options, profiles, and positional args
+ * returns null-prototype dictionary (`Object.create(null)`) immune to `__proto__` injection
  */
 export function arg_parse_cli(args= []) {
     var options= Object.create(null)
     var positionals= []
+    var profiles= []
     var i= 0
     while (i < args.length) {
         var arg= args[i]
@@ -98,19 +180,31 @@ export function arg_parse_cli(args= []) {
                 options[key]= val
             } else {
                 var key= arg.slice(2)
-                if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                if (i + 1 < args.length && !args[i + 1].startsWith("-") && !args[i + 1].startsWith("+")) {
                     options[key]= args[i + 1]
                     i= i + 1
                 } else {
                     options[key]= true
                 }
             }
-        } else if (arg.startsWith("-") && arg.length > 1) {
-            options[arg.slice(1)]= true
+        } else if (arg.startsWith("+") && arg.length > 1) {
+            var key= arg.slice(1)
+            options[arg]= true
+            options[key]= true
+            profiles.push(arg)
+        } else if (arg.startsWith("-") && arg.length > 1 && !arg.startsWith("--")) {
+            var key= arg.slice(1)
+            if (key === 'bg' || key === 'fg' || key === 'start' || key === 'resident' || key === 'nolimits' || key.startsWith('profile')) {
+                options[arg]= true
+                options[key]= false
+                profiles.push(arg)
+            } else {
+                options[key]= true
+            }
         } else {
             positionals.push(arg)
         }
         i= i + 1
     }
-    return { options, positionals }
+    return { options, positionals, profiles }
 }

@@ -5,6 +5,7 @@ import {
     arg_slice_compare_secure,
     arg_parse_binary_header,
     arg_parse_cli,
+    arg_parse_profile,
     arg_get_opt
 } from "./libcd_arg.mjs"
 
@@ -20,6 +21,10 @@ export class libcd_ArgParser {
     parse_cli(args= null) {
         var target= (args !== null) ? args : this.default_args
         return arg_parse_cli(target)
+    }
+
+    parse_profile(profile_arg= '+bg', options= {}) {
+        return arg_parse_profile(profile_arg, options)
     }
 
     get_opt(opts, key, default_val= null) {

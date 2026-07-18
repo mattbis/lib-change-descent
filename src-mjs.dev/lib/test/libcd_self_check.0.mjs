@@ -80,10 +80,12 @@ test("libcd_self_check: zero-GC SharedArrayBuffer node struct accessors", () => 
 import { operation_run_pipeline, libcd_micro_pause } from "../internal/op/libcd_operation.mjs"
 
 test("libcd_operation: composed operation pipelines, retry boundaries, and micro pauses", async () => {
-  // 1. Verify micro pause factors
+  // 1. Verify micro pause factors including opposite profile modifiers
   assert.strictEqual(libcd_micro_pause.get_factor({ profile: "+bg" }), 10)
   assert.strictEqual(libcd_micro_pause.get_factor({ profile: "+fg" }), 1)
   assert.strictEqual(libcd_micro_pause.get_factor({ profile: "-nolimits" }), 0)
+  assert.strictEqual(libcd_micro_pause.get_factor({ profile: "-bg" }), 1, "Opposite -bg profile yields 1ms like fg")
+  assert.strictEqual(libcd_micro_pause.get_factor({ profile: "-fg" }), 10, "Opposite -fg profile yields 10ms like bg")
 
   // 2. Test composed steps using thisArg context and automatic retry recovery
   var attempts = 0
@@ -278,10 +280,16 @@ import {
 import { libcd_ArgParser } from "../arg/libcd_ArgParser.mjs"
 
 test("libcd_arg: fast/secure slice comparators, binary header parsing, and dual surface CLI arg parser", () => {
-  // 1. Verify profile parsing attaches default 3 years time mask (0x10)
+  // 1. Verify profile parsing attaches default 3 years time mask and handles opposite flags (-bg, -start, +resident)
   var prof = arg_parse_profile("+resident")
   assert.strictEqual(prof.time_mask, 0x10, "Default profile initialization sets 3 years time mask per doc")
   assert.strictEqual(prof.periodic_maintenance, true, "Maintenance is enabled by default per profile")
+
+  var opp_prof = arg_parse_profile("-bg -start +resident")
+  assert.strictEqual(opp_prof.bg, false, "Opposite -bg sets bg false")
+  assert.strictEqual(opp_prof.start, false, "Opposite -start sets start false")
+  assert.strictEqual(opp_prof.resident, true, "+resident sets resident true")
+  assert.strictEqual(opp_prof.yield_ms, 1, "-bg opposite profile selects 1ms yield")
 
   // 2. Verify fast zero-GC slice comparator
   var buf_a = new Uint8Array([0xCD, 0xCD, 0x01, 0x02, 0x03])
@@ -289,34 +297,45 @@ test("libcd_arg: fast/secure slice comparators, binary header parsing, and dual 
   assert.strictEqual(arg_slice_compare_fast(buf_a, 0, buf_b, 1, 3), true, "Fast slice match across offsets 0 and 1")
   assert.strictEqual(arg_slice_compare_fast(buf_a, 0, buf_b, 1, 4), false, "Fast slice mismatch at 4th byte")
 
-  // 2. Verify secure raw XOR accumulator inside uint8 bounds
+  // 3. Verify secure raw XOR accumulator inside uint8 bounds
   assert.strictEqual(arg_slice_compare_secure_raw(buf_a, 0, buf_b, 1, 3), true, "Secure raw accumulator matches identical slices")
   assert.strictEqual(arg_slice_compare_secure_raw(buf_a, 0, buf_b, 1, 4), false, "Secure raw accumulator detects byte difference")
 
-  // 3. Verify node crypto timingSafeEqual wrapper
+  // 4. Verify node crypto timingSafeEqual wrapper
   var full_1 = new Uint8Array([10, 20, 30])
   var full_2 = new Uint8Array([10, 20, 30])
   var full_3 = new Uint8Array([10, 20, 31])
   assert.strictEqual(arg_slice_compare_secure(full_1, full_2), true, "timingSafeEqual matches exact equal arrays")
   assert.strictEqual(arg_slice_compare_secure(full_1, full_3), false, "timingSafeEqual detects mismatch")
 
-  // 4. Verify binary magic header checking
+  // 5. Verify binary magic header checking
   var magic = new Uint8Array([0xCD, 0xCD])
   assert.strictEqual(arg_parse_binary_header(buf_a, 0, magic), true, "Binary header match at offset 0")
   assert.strictEqual(arg_parse_binary_header(buf_b, 1, magic), true, "Binary header match at offset 1")
 
-  // 5. Verify CLI arg parsing via functional and class wrapper surfaces
-  var dummy_argv = ["--verbose", "--threads=4", "-D", "C:\\Data"]
+  // 6. Verify CLI arg parsing via functional and class wrapper surfaces including opposite profile flags
+  var dummy_argv = ["--verbose", "--threads=4", "-D", "+resident", "-bg", "-start", "C:\\Data"]
   var parsed_func = arg_parse_cli(dummy_argv)
   assert.strictEqual(parsed_func.options.verbose, true)
   assert.strictEqual(parsed_func.options.threads, "4")
   assert.strictEqual(parsed_func.options.D, true)
+  assert.strictEqual(parsed_func.options["+resident"], true)
+  assert.strictEqual(parsed_func.options.resident, true)
+  assert.strictEqual(parsed_func.options["-bg"], true)
+  assert.strictEqual(parsed_func.options.bg, false, "-bg flag sets boolean options.bg to false")
+  assert.strictEqual(parsed_func.options["-start"], true)
+  assert.strictEqual(parsed_func.options.start, false, "-start flag sets boolean options.start to false")
+  assert.deepStrictEqual(parsed_func.profiles, ["+resident", "-bg", "-start"])
   assert.deepStrictEqual(parsed_func.positionals, ["C:\\Data"])
 
   var parser = new libcd_ArgParser(dummy_argv)
   var parsed_class = parser.parse_cli()
   assert.deepStrictEqual(parsed_class, parsed_func, "Dual surface class wrapper delegates exactly to functional primitive")
   assert.strictEqual(parser.compare_fast(buf_a, 0, buf_b, 1, 3), true, "Class wrapper fast comparison works")
+
+  var class_prof = parser.parse_profile("-bg -start")
+  assert.strictEqual(class_prof.bg, false, "Class wrapper parse_profile delegates to functional primitive")
+  assert.strictEqual(class_prof.start, false, "Class wrapper parse_profile resolves -start opposite")
 })
 
 import { PROTOCOL_OP } from "../worker/libcd_worker_op.mjs"

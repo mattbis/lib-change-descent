@@ -14,8 +14,17 @@ export const libcd_micro_pause= Object.freeze({
 
     get_factor: function(ctx) {
         var profile= ctx?.profile || 'bg'
-        if (profile.includes('-nolimits')) return this.factors.nolimits
-        if (profile.includes('+fg') || profile.includes('fg')) return this.factors.fg
+        if (typeof profile === 'object' && profile !== null) {
+            if (profile.nolimits === true || profile['-nolimits'] === true) return this.factors.nolimits
+            if (profile.fg === true || profile.bg === false || profile['-bg'] === true) return this.factors.fg
+            if (profile.bg === true || profile.fg === false || profile['-fg'] === true) return this.factors.bg
+            if (profile.yield_ms !== undefined) return profile.yield_ms
+        }
+        var str= typeof profile === 'string' ? profile : (profile?.profile || 'bg')
+        if (str.includes('-nolimits') || str.includes('+nolimits')) return this.factors.nolimits
+        if (str.includes('-bg') || str.includes('+fg')) return this.factors.fg
+        if (str.includes('-fg') || str.includes('+bg') || str === 'bg') return this.factors.bg
+        if (str.includes('fg')) return this.factors.fg
         return this.factors.bg
     },
 
