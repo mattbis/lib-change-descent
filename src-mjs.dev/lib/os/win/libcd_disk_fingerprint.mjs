@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process'
+import { os_exec_sync } from '../libcd_os_executor.mjs'
 import { post } from '../../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../../internal/imut_log/libcd_imut_log_entry.mjs'
 
@@ -18,7 +18,8 @@ export function disk_fingerprint(drive_letter) {
     }
 
     // Returns the Volume Serial Number (e.g., "A2C4-DE55")
-    const output= execSync(`wmic volume where "driveletter='${drive_letter}'" get DeviceID, VolumeSerialNumber`).toString()
+    const res= os_exec_sync('wmic', ['volume', 'where', `driveletter='${drive_letter}'`, 'get', 'DeviceID,', 'VolumeSerialNumber'], { reject: false })
+    const output= res.stdout || ''
     
     // TODO(matt): check if it's a valid disk identifier in the windows schema to know the parsing worked properly
     const lines= output.trim().split('\n')

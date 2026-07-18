@@ -484,6 +484,42 @@ test("libcd__os_filter & libcd_os_fs: formal filter precedence hierarchies, fast
   }
 })
 
+import {
+  os_exec,
+  os_exec_sync,
+  os_exec_parse_cmd
+} from "../os/libcd_os_executor.mjs"
+
+test("libcd_os_executor: execa-inspired unified async/sync execution, quote tokenization, timeout cancellation, and reject:false status inspection", async () => {
+  // 1. Verify command quote tokenization (`os_exec_parse_cmd`)
+  var parsed = os_exec_parse_cmd('node -e "console.log(\'hello world\')" --version')
+  assert.strictEqual(parsed.command, "node", "Command binary correctly parsed")
+  assert.strictEqual(parsed.args[0], "-e", "First flag correctly parsed")
+  assert.strictEqual(parsed.args[1], "console.log('hello world')", "Quoted argument cleanly preserved without outer double quotes")
+
+  // 2. Verify synchronous execution with clean result dictionary (`os_exec_sync`)
+  var sync_res = os_exec_sync("node", ["-e", "process.stdout.write('sync ok')"])
+  assert.strictEqual(sync_res.exitCode, 0, "Sync execution returned exitCode 0")
+  assert.strictEqual(sync_res.stdout, "sync ok", "Sync stdout captured cleanly with stripped newline")
+  assert.strictEqual(sync_res.failed, false, "Sync failed flag is false")
+
+  // 3. Verify asynchronous Promise execution (`os_exec`)
+  var async_res = await os_exec("node", ["-e", "process.stdout.write('async ok')"])
+  assert.strictEqual(async_res.exitCode, 0, "Async execution returned exitCode 0")
+  assert.strictEqual(async_res.stdout, "async ok", "Async stdout captured cleanly")
+  assert.strictEqual(typeof async_res.duration_ms, "number", "Execution duration recorded")
+
+  // 4. Verify reject: false behavior on non-zero exit codes
+  var failed_res = await os_exec("node", ["-e", "process.exit(42)"], { reject: false })
+  assert.strictEqual(failed_res.exitCode, 42, "Captured exit code 42 without rejecting promise")
+  assert.strictEqual(failed_res.failed, true, "Failed flag set to true")
+
+  // 5. Verify timeout cancellation behavior
+  var timed_out_res = await os_exec("node", ["-e", "setTimeout(() => {}, 5000)"], { timeout: 100, reject: false })
+  assert.strictEqual(timed_out_res.timedOut, true, "Execution marked as timedOut when exceeding timeout threshold")
+  assert.strictEqual(timed_out_res.failed, true, "Execution marked as failed on timeout")
+})
+
 
 
 

@@ -11,13 +11,13 @@
  */
 
 // 1p
-import { spawnSync } from 'node:child_process'
 import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 
 // 2p
 import { arg_get_opt } from '../../arg/libcd_arg.mjs'
 import { win_is_administrator } from './libcd_administrator.mjs'
+import { os_exec_sync } from '../libcd_os_executor.mjs'
 import { post } from '../../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../../internal/imut_log/libcd_imut_log_entry.mjs'
 
@@ -57,16 +57,8 @@ export function win_get_node_process_path(options= {}) {
  */
 export function win_check_firewall_rule(rule_name) {
     if (process.platform !== 'win32') return false
-    try {
-        var res= spawnSync('netsh', ['advfirewall', 'firewall', 'show', 'rule', 'name=' + rule_name], {
-            stdio: 'pipe',
-            encoding: 'utf8',
-            windowsHide: true
-        })
-        return res.status === 0 && (res.stdout || '').includes(rule_name)
-    } catch (e) {
-        return false
-    }
+    var res= os_exec_sync('netsh', ['advfirewall', 'firewall', 'show', 'rule', 'name=' + rule_name], { reject: false })
+    return res.exitCode === 0 && (res.stdout || '').includes(rule_name)
 }
 
 /**
@@ -86,7 +78,7 @@ export function win_add_firewall_rules(options= {}) {
     // remove existing rules if present so we can update cleanly
     win_remove_firewall_rules(options)
 
-    var res_out= spawnSync('netsh', [
+    var res_out= os_exec_sync('netsh', [
         'advfirewall', 'firewall', 'add', 'rule',
         'name=' + rule_out,
         'dir=out',
@@ -94,13 +86,13 @@ export function win_add_firewall_rules(options= {}) {
         'program=' + target_exe,
         'enable=yes',
         'profile=any'
-    ], { stdio: 'pipe', encoding: 'utf8', windowsHide: true })
+    ], { reject: false })
 
-    if (res_out.status !== 0) {
+    if (res_out.failed) {
         throw new Error('[WIN_ISOLATE] Failed to add outbound WFP rule: ' + (res_out.stderr || res_out.stdout))
     }
 
-    var res_in= spawnSync('netsh', [
+    var res_in= os_exec_sync('netsh', [
         'advfirewall', 'firewall', 'add', 'rule',
         'name=' + rule_in,
         'dir=in',
@@ -108,9 +100,9 @@ export function win_add_firewall_rules(options= {}) {
         'program=' + target_exe,
         'enable=yes',
         'profile=any'
-    ], { stdio: 'pipe', encoding: 'utf8', windowsHide: true })
+    ], { reject: false })
 
-    if (res_in.status !== 0) {
+    if (res_in.failed) {
         throw new Error('[WIN_ISOLATE] Failed to add inbound WFP rule: ' + (res_in.stderr || res_in.stdout))
     }
 
@@ -130,8 +122,8 @@ export function win_remove_firewall_rules(options= {}) {
     var rule_out= rule_prefix + 'OUT'
     var rule_in= rule_prefix + 'IN'
 
-    spawnSync('netsh', ['advfirewall', 'firewall', 'delete', 'rule', 'name=' + rule_out], { stdio: 'ignore', windowsHide: true })
-    spawnSync('netsh', ['advfirewall', 'firewall', 'delete', 'rule', 'name=' + rule_in], { stdio: 'ignore', windowsHide: true })
+    os_exec_sync('netsh', ['advfirewall', 'firewall', 'delete', 'rule', 'name=' + rule_out], { reject: false })
+    os_exec_sync('netsh', ['advfirewall', 'firewall', 'delete', 'rule', 'name=' + rule_in], { reject: false })
 
     post(make_entry('OS_CALL', 'WIN_FIREWALL_ISOLATE_REMOVED', { rule_out, rule_in }))
     return { success: true, rule_out, rule_in }
