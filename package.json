@@ -11,16 +11,11 @@
   },
   "type": "module",
   "private": true,
-  "dependencies": {
-    "@huggingface/blake3-wasm": "^0.0.2"
-  },
   "scripts": {
-    "test": "node --test src-mjs.dev/lib/test/libcd_self_check.0.mjs",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src-mjs.dev",
     "format": "prettier --write .",
-    "dev": "node --watch src-mjs.dev/main/libcd_main.mjs"
-  },
-  "devDependencies": {
-    "ink": "^6.6.0"
+    "dev": "node --watch src-mjs.dev/main/libcd_main.mjs",
+    "self_check": "node --test src-mjs.dev/lib/test/libcd_self_check.0.mjs"
   }
 }

@@ -27,7 +27,6 @@ function get_worker() {
     if (_worker !== null) return _worker
 
     _worker= new Worker(WORKER_PATH)
-    _worker.unref()
 
     // manifest hook — receives FLUSHED notifications from the worker
 
@@ -41,6 +40,8 @@ function get_worker() {
     _worker.on('error', (err) => {
         console.error('[IMUT_LOG][WORKER_ERROR]', err)
     })
+
+    _worker.unref()
 
     return _worker
 }
