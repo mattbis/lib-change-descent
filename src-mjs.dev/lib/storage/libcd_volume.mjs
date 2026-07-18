@@ -7,7 +7,17 @@
 import { run_operation, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
 import { LIBCD_IMPRINT_MAGIC } from '../../config/libcd_constants.mjs'
 
+/** there isn't one global state this refers to each volume provider and whether it still exists or not, is known or new... etc */
+export const VOLUME_SIG_STATE = {
+    ABORT: 0,
+    RUN: 1,
+    PROCESS: 2
+}
+export const LIBCD_VOLUME_SIG_STATE = VOLUME_SIG_STATE
+export const SIG_STATE = VOLUME_SIG_STATE
+
 export const LIBCD_VOLE_MASK= {
+
     acl: {
         probe_name_records: 0x01,
         descend_root: 0x02,
