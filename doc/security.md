@@ -1,6 +1,24 @@
 # lib-change-descent : Security & Resident Process Protection Manifest
 
-## 1. Threat Model: Resident Process Prototype Pollution
+## 1. Static Dependencies, Assumed Savvy Environments & Composable Security
+
+### Zero Supply Chain Attacks (`1p/2p` Discipline)
+Because `lib-change-descent` strictly adheres to a **zero-dependency architecture** (`// 1p` Node core intrinsics and `// 2p` internal project modules without third-party `node_modules`), **supply chain attacks are structurally impossible**. There are no external packages to poison, no transitive dependency confusion, and no network scripts pulled down at install time.
+
+### Assumed Secure & Savvy Environment
+Instead of wrapping every internal hot path in defensive guards against hostile code, the engine operates under a pragmatic baseline assumption: **your runtime environment is secure, the operator is savvy, and foundational mitigations are already layered in place**. Mitigations as far as we can go (`--frozen-intrinsics`, `Object.freeze`, null-prototype `Map` dictionaries, safe `arg_get_opt` option extraction, and `+gate` cryptographic PIN validation) establish an unyielding defensive ring around our resident context.
+
+### Curtailing Hot-Path Security Overhead for Process Execution & Modification
+Given the core operational nature of this library—executing unified system processes (`wmic`, `netsh advfirewall`), managing resident subprocesses, and dynamically modifying runtime process arguments (`+gate` verification)—we intentionally **curtail redundant defensive security overhead** inside hot engine loops where zero-GC, C-like speed is paramount.
+
+### Composable Security & Build Modifiers
+Rather than baking heavy runtime security checks directly into our low-level data accessors (`NODE_STRIDE` / struct offsets), we separate **Core Execution Constructs** from **Layered Security Protections**:
+* **Core Constructs:** Pure, unboxed, monomorphic functional blocks focused entirely on maximum mechanical sympathy and throughput.
+* **Build Modifiers (`var/build` & Higher-Order Wrappers):** When deploying across untrusted boundaries or bundling resident isolates, a **Build Modifier** dynamically composes and layers security features on top of the core constructs (e.g., injecting `esbuild` global freeze banners, applying WFP ring-0 network isolation wrappers, or enforcing boundary object sealing).
+
+---
+
+## 2. Threat Model: Resident Process Prototype Pollution
 Because `lib-change-descent` operates as a long-running (**resident**) engine monitoring complex filesystem activity across up to 21 active storage volumes, **prototype pollution (`__proto__`, `Object.prototype` injection)** is a critical threat vector to monitor.
 
 In a transient command-line utility, a polluted prototype exits cleanly when the process terminates. In a long-running resident process, however, a poisoned `Object.prototype` stays permanently in memory across the lifetime of the Main Thread and Worker Isolates, potentially hijacking subsequent scan cycles, driver configurations, or volume discovery loops.
@@ -10,14 +28,14 @@ ES `class` definitions do not naturally protect against prototype bleeding. Unde
 
 ---
 
-## 2. The Data-Oriented Advantage: TypedArrays are Immune
+## 3. The Data-Oriented Advantage: TypedArrays are Immune
 The classic prototype pollution exploit targets dynamic object property indexing (`obj[key] = value`). Because `lib-change-descent` strictly enforces **Data-Oriented Design** (`SharedArrayBuffer`, `Uint8Array`, `Int32Array`, and struct offset accessors inside `NODE_STRIDE`), the core engine loops are naturally immune:
 * Numeric index writes on typed arrays (`u8_view[offset + 4] = 0x12`) never traverse or consult `Object.prototype`.
 * Zero-GC binary comparators (`arg_slice_compare_fast`, `arg_slice_compare_secure_raw`) operate strictly on numeric bounds without allocating intermediate heap objects or inspecting property descriptors.
 
 ---
 
-## 3. Pure MJS Mitigations Implemented Across `src-mjs.dev/`
+## 4. Pure MJS Mitigations Implemented Across `src-mjs.dev/`
 
 To secure the boundaries where our high-performance engine interacts with standard JavaScript objects (CLI arguments, driver configurations, and internal registries), we enforce three strict, zero-dependency (`// 1p`, `// 2p`) runtime mitigations:
 
@@ -46,7 +64,7 @@ All static command maps, protocol operations, and vole masks are explicitly froz
 
 ---
 
-## 4. Why Native Mitigations Win Over Post-Build Hardening (Babel/SWC)
+## 5. Why Native Mitigations Win Over Post-Build Hardening (Babel/SWC)
 
 We consciously choose to write code with these patterns in our source directory (`src-mjs.dev/`) rather than relying on complex post-compilation AST rewriting tools (`Babel`, `SWC`, `Terser` in `var/build`):
 1. **Zero Build Complexity (`1p/2p` Discipline):** Our library ships raw MJS or bundled files (`no-semicolon`, zero unnecessary `3p` build dependencies). Requiring Babel to rewrite every `{}` into `Object.create(null)` slows down development and complicates our clean release channels.
@@ -63,7 +81,7 @@ Freezing `Object.prototype` globally across the Isolate right at startup prevent
 
 ---
 
-## 5. Why `var` is Safe & Why We Keep Code Lockdown with Boot-Time `--frozen-intrinsics`
+## 6. Why `var` is Safe & Why We Keep Code Lockdown with Boot-Time `--frozen-intrinsics`
 
 While some modern coding guidelines discourage **`var`** due to block-scoping concerns (`let`/`const`), `lib-change-descent` deliberately uses `var` across local functions and loops (`var i = 0`) for **mechanical sympathy**:
 1. **Zero Temporal Dead Zone (`TDZ`):** Unlike `let`/`const`, `var` loop counters do not generate runtime TDZ initialization checks on every loop iteration inside V8 TurboFan, delivering unboxed C-like execution speed.
@@ -73,7 +91,7 @@ While some modern coding guidelines discourage **`var`** due to block-scoping co
 
 ---
 
-## 6. MJS $\leftrightarrow$ Zig Boundary Security & Seamless Fallback Architecture
+## 7. MJS $\leftrightarrow$ Zig Boundary Security & Seamless Fallback Architecture
 
 To achieve maximum performance when querying ring-0 operating system journals (`FSCTL_QUERY_USN_JOURNAL` on Windows or `inotify`/`fanotify` on Linux), our architecture includes experimental native Zig modules (`src-zig.dev/journal_reader.zig`) alongside our pure MJS engine (`src-mjs.dev/`).
 
