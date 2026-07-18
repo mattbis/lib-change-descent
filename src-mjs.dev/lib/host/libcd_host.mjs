@@ -11,6 +11,7 @@
 
 import { post } from '../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../internal/imut_log/libcd_imut_log_entry.mjs'
+import { os_metadata_collect, os_metadata_check_environment } from '../os/libcd__os_metadata.mjs'
 // metric schema: src-mjs.dev/host/libcd_metric_schema.json (moved alongside this file)
 
 // ---- Runtime Detection ----
@@ -44,30 +45,35 @@ const detect_version= (runtime) => {
 // ---- Exports ----
 
 /**
- * Identify the host OS platform.
- * TODO(matt): expand to call per-os subroutine for richer detail
- * @returns {string}
+ * Identify the host OS platform and system identity.
+ * calls per-os metadata collection (`os_metadata_collect`) for rich detail (`hostname`, `release`, `user`, `exec_path`).
+ * @returns {{ hostname: string, platform: string, release: string, arch: string, user: string, exec_path: string, node_version: string, cwd: string, timestamp: number }}
  */
 export function host_os() {
-    return process?.platform ?? 'unknown'
+    return os_metadata_collect()
 }
 
 /**
  * Build the full host fingerprint and post it to the imut_log.
  * Call once on session start.
- * Returns the fingerprint so the manifest can store it.
+ * automatically triggers `os_metadata_check_environment` to audit cross-OS volume transitions and unknown hosts.
+ * Returns the enriched fingerprint so the manifest can store it.
  *
- * @returns {{ runtime: HostRuntime, version: string, platform: string, arch: string, pid: number }}
+ * @returns {{ runtime: HostRuntime, version: string, platform: string, arch: string, pid: number, os_identity: Object, is_known_host: boolean, cross_os_changes: Array }}
  */
 export function host_fingerprint() {
     const runtime= detect_runtime()
+    const os_meta= os_metadata_check_environment()
 
     const fingerprint= {
         runtime,
         version:  detect_version(runtime),
         platform: process?.platform ?? 'unknown',
         arch:     process?.arch     ?? 'unknown',
-        pid:      process?.pid      ?? -1
+        pid:      process?.pid      ?? -1,
+        os_identity: os_meta.os_identity,
+        is_known_host: os_meta.is_known_host,
+        cross_os_changes: os_meta.cross_os_changes
     }
 
     post(make_entry('SESSION', 'HOST_FINGERPRINT', fingerprint))

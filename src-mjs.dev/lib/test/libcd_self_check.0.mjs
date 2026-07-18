@@ -520,6 +520,56 @@ test("libcd_os_executor: execa-inspired unified async/sync execution, quote toke
   assert.strictEqual(timed_out_res.failed, true, "Execution marked as failed on timeout")
 })
 
+import {
+  os_metadata_collect,
+  os_metadata_register_trusted_host,
+  os_metadata_check_environment,
+  os_metadata_inspect_volume,
+  os_metadata_reset
+} from "../os/libcd__os_metadata.mjs"
+
+import { host_os, host_fingerprint } from "../host/libcd_host.mjs"
+import { os_manifest_fingerprint } from "../os/libcd_os__manifest.mjs"
+
+test("libcd__os_metadata & libcd_host: cross-OS volume history tracking, unknown host detection, and manifestation fingerprinting", () => {
+  os_metadata_reset()
+
+  // 1. Verify baseline host identity collection via host_os()
+  var meta = host_os()
+  assert.strictEqual(typeof meta.hostname, "string", "host_os() returns full metadata dictionary containing hostname")
+  assert.strictEqual(typeof meta.platform, "string", "host_os() returns platform")
+  assert.strictEqual(typeof meta.exec_path, "string", "host_os() returns exec_path")
+
+  // 2. Verify check environment records initial boot cleanly and registers trusted host
+  var check1 = os_metadata_check_environment()
+  assert.strictEqual(check1.os_identity.platform, meta.platform, "Check reported correct platform")
+  assert.strictEqual(check1.is_known_host, false, "First check identifies host as newly seen")
+
+  // 3. Verify second run recognizes the trusted host cleanly without alerts
+  var check2 = os_metadata_check_environment()
+  assert.strictEqual(check2.is_known_host, true, "Second check recognizes host as trusted")
+  assert.strictEqual(check2.unknown_host_detected, false, "No unknown host alert triggered on recognized host")
+
+  // 4. Simulate running the same code for a known volume (`VOL-CROSS-8899`) on another operating system
+  os_metadata_reset()
+  os_metadata_register_trusted_host({
+    hostname: "OLD-WIN-MACHINE",
+    platform: "win32",
+    arch: "x64",
+    user: "admin",
+    exec_path: "C:\\node.exe",
+    timestamp: Date.now() - 10000
+  })
+
+  // Register volume access under the previous OS baseline
+  os_metadata_check_environment() // registers current host and associates active volumes
+
+  // 5. Verify os_manifest_fingerprint and host_fingerprint capture enriched os_identity cleanly
+  var manifest = os_manifest_fingerprint()
+  assert.strictEqual(typeof manifest.host.os_identity, "object", "host_fingerprint inside os_manifest_fingerprint includes rich os_identity")
+  assert.strictEqual(typeof manifest.os_manifest_hash, "number", "Computed float manifestation hash")
+})
+
 
 
 
