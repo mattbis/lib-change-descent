@@ -17,11 +17,12 @@ ive many scripts this will use.... its more so i have consistency across many vo
 
 ---
 
-### Thought on Composable Architecture & Static Dependency Security
+### Thought on Composable Architecture & Dynamic Function Composition
 
-Given that our dependencies are static (`1p/2p` discipline, no `node_modules` bloat), there are no supply chain attacks to defend against. Furthermore, assuming the local runtime environment and operator are savvy and secure, we do not need to bog down hot execution paths (`execa`-inspired process execution, `+gate` arg verification) with heavy runtime security overhead.
+Given that our dependencies are static (`1p/2p` discipline, no `node_modules` bloat), there are no supply chain attacks to defend against. Furthermore, assuming the local runtime environment and operator are savvy and secure, we do not need to bog down hot execution paths (`execa`-inspired process execution, `+gate` arg verification) with heavy runtime security overhead or multi-layered function context switching.
 
-Instead, the roadmap embraces a **Composable Architecture**:
-* **Core Constructs (`src-mjs.dev`):** Unboxed, zero-GC, monomorphic functional blocks dedicated entirely to maximum mechanical sympathy.
+Instead, the roadmap embraces **Dynamic Function Composition (`The String Trick with Context`)**, detailed in **[../composable_architecture.md](../composable_architecture.md)**:
+* **Core Execution Primitives (`src-mjs.dev`):** Unboxed, zero-GC, monomorphic functional blocks dedicated entirely to maximum mechanical sympathy.
+* **Dynamic Pipeline Compilation (`new Function('ctx', ...)`):** Operation steps, offsets, and filter masks are dynamically compiled into a single C-like flattened loop without intermediate function call stack frames.
 * **Build Modifiers (`var/build` & Wrappers):** Rather than cluttering core loops, security layers (`esbuild` global freeze banners, WFP network isolation, boundary object sealing) are composed on top via higher-order build modifiers when crossing untrusted execution boundaries.
 

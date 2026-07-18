@@ -12,8 +12,8 @@ Instead of wrapping every internal hot path in defensive guards against hostile 
 Given the core operational nature of this library—executing unified system processes (`wmic`, `netsh advfirewall`), managing resident subprocesses, and dynamically modifying runtime process arguments (`+gate` verification)—we intentionally **curtail redundant defensive security overhead** inside hot engine loops where zero-GC, C-like speed is paramount.
 
 ### Composable Security & Build Modifiers
-Rather than baking heavy runtime security checks directly into our low-level data accessors (`NODE_STRIDE` / struct offsets), we separate **Core Execution Constructs** from **Layered Security Protections**:
-* **Core Constructs:** Pure, unboxed, monomorphic functional blocks focused entirely on maximum mechanical sympathy and throughput.
+Rather than baking heavy runtime security checks directly into our low-level data accessors (`NODE_STRIDE` / struct offsets), we separate **Core Execution Constructs** from **Layered Security Protections** (detailed in **[composable_architecture.md](composable_architecture.md)**):
+* **Core Constructs (`Dynamic Function Composition / String Trick`):** Pure, unboxed, monomorphic functional blocks compiled dynamically via `new Function('ctx', ...)` to eliminate intermediate stack frames and context switching costs.
 * **Build Modifiers (`var/build` & Higher-Order Wrappers):** When deploying across untrusted boundaries or bundling resident isolates, a **Build Modifier** dynamically composes and layers security features on top of the core constructs (e.g., injecting `esbuild` global freeze banners, applying WFP ring-0 network isolation wrappers, or enforcing boundary object sealing).
 
 ---

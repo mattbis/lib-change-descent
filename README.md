@@ -38,8 +38,16 @@ The first part of how lkman is going to work...  This probably exists elsewhere 
 ### Phase 4: Dual Surface Polish & Production Verification
 **Goal:** Lock in tree-shaking, publish forensic logging, and benchmark against industry standards.
 - [ ] Tree-Shaking Verification (Dual Surface API class extraction)
-- [ ] Immutable Manifest Storage (flush thresholds)
 - [ ] Comprehensive Benchmarking & Stress Testing vs Chokidar
+
+### Thought on Composable Architecture & Dynamic Function Composition
+
+As `lib-change-descent` scales across operating systems and execution targets, we recognize that **security and mechanical sympathy should not fight for the hot path**. Because our dependencies are strictly static (`1p/2p` discipline, zero `node_modules` bloat), **there are no supply chain attacks to defend against**. Furthermore, assuming the runtime environment and operator are secure and savvy, we do not need to encumber hot execution loops with heavy runtime security layers or multi-layered function call contexts.
+
+Instead, the roadmap moves toward **Dynamic Function Composition (`The String Trick with Context`)**, detailed in **[doc/composable_architecture.md](doc/composable_architecture.md)**:
+1. **Core Execution Primitives (`src-mjs.dev`):** Unboxed, zero-GC, monomorphic functional blocks whose sole responsibility is high-throughput descent hashing and volume traversal at C-like speeds.
+2. **Dynamic Pipeline Compilation (`new Function('ctx', ...)`):** Rather than chaining dozens of intermediate function calls (`pipeline(step1(step2(ctx)))`), operation steps and memory offsets are dynamically assembled into a single C-like flattened function string and JIT-compiled once at startup.
+3. **Layered Security via Build Modifiers (`var/build` & Wrappers):** When crossing untrusted boundaries, packaging for public distribution, or isolating resident processes, higher-order **Build Modifiers** dynamically compose security layers around the core constructs (`e.g., injecting global esbuild freeze banners, wrapping execution inside WFP ring-0 network isolation, or enforcing boundary object sealing`).
 
 
 ## STRING HEAP MITIGATION
