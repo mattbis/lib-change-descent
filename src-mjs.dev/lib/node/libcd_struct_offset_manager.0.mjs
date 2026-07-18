@@ -104,18 +104,11 @@ export const node_create_accessor = (buffer) => {
   }
 }
 
-/** backward compatibility alias */
-export const create_node_accessor = (buffer) => node_create_accessor(buffer)
-
 /**
  * space-prefixed function: node_accessor
  */
-export const node_accessor = (nodeId, pages) => {
+export function node_accessor(nodeId, pages) {
     const pageIdx = nodeId >> 16
     const offset = nodeId & 0xFFFF
     return node_create_accessor(pages[pageIdx])//.at(offset)
 }
-
-/** backward compatibility aliases */
-export const getAccessorForNode = (nodeId, pages) => node_accessor(nodeId, pages)
-export const node_get_accessor = (nodeId, pages) => node_accessor(nodeId, pages)

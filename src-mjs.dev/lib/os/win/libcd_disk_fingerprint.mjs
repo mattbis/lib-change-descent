@@ -10,7 +10,7 @@ import { make_entry } from '../../internal/imut_log/libcd_imut_log_entry.mjs'
  * @param {string} drive_letter
  * @returns {string}
  */
-export function disk_fingerprint_get(drive_letter) {
+export function disk_fingerprint(drive_letter) {
     try {
         post(make_entry('OS_CALL', 'WMIC_CALL', { drive: drive_letter }))
     } catch (e) {
@@ -28,9 +28,4 @@ export function disk_fingerprint_get(drive_letter) {
     }
     
     throw new Error(`Could not fingerprint drive: ${drive_letter}`)
-}
-
-/** backward compatibility alias */
-export function get_disk_fingerprint(drive_letter) {
-    return disk_fingerprint_get(drive_letter)
 }

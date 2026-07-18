@@ -1,4 +1,4 @@
-# Decent Descent Float Hash: Design Proposal
+# Descent Hash: Design Proposal
 
 A lightweight, non-cryptographic, zero-allocation hierarchical hashing algorithm designed to detect state changes in a volume's descent tree. It targets maximum mechanical sympathy with JS/V8 engines by using floating-point arithmetic rather than integer bitwise or string manipulations.
 
@@ -15,12 +15,12 @@ A lightweight, non-cryptographic, zero-allocation hierarchical hashing algorithm
 
 ## 2. Mathematical Formulation: The "Float Hash"
 
-JavaScript represents all numbers as 64-bit IEEE 754 double-precision floats. Instead of typical 32-bit integer hashing (which forces V8 to convert back and forth between float registers and 32-bit integer representations), the **Decent Descent Hash** operates entirely in the $[0, 1)$ float domain.
+JavaScript represents all numbers as 64-bit IEEE 754 double-precision floats. Instead of typical 32-bit integer hashing (which forces V8 to convert back and forth between float registers and 32-bit integer representations), the **Descent Hash** operates entirely in the $[0, 1)$ float domain.
 
-### A. Fractional Part Hashing (`fract`)
+### A. Fractional Part Hashing (`descenthash_fract`)
 For any float value $x$:
 
-$$\text{fract}(x) = x - \lfloor x \rfloor$$
+$$\text{descenthash\_fract}(x) = x - \lfloor x \rfloor$$
 
 Using fractional parts keeps the accumulator bounded within $[0, 1)$, completely preventing overflow issues or loss of precision from large numbers.
 
@@ -31,22 +31,22 @@ Each node in the 32-byte stride buffer contains metadata at fixed offsets:
 * **mtime** (bytes 16–23, `f64_view`)
 * **size** (bytes 24–27 or 24–31, depending on layout)
 
-We define irrational scaling factors to disperse values:
+We define irrational scaling factors (`descenthash_k1` .. `descenthash_k4`) to disperse values:
 
-$$K_1 = \sqrt{2} \approx 1.4142135623730951$$
-$$K_2 = \sqrt{3} \approx 1.7320508075688772$$
-$$K_3 = \sqrt{5} \approx 2.2360679774997897$$
-$$K_4 = \sqrt{7} \approx 2.6457513110645906$$
+$$\text{descenthash\_k1} = \sqrt{2} \approx 1.4142135623730951$$
+$$\text{descenthash\_k2} = \sqrt{3} \approx 1.7320508075688772$$
+$$\text{descenthash\_k3} = \sqrt{5} \approx 2.2360679774997897$$
+$$\text{descenthash\_k4} = \sqrt{7} \approx 2.6457513110645906$$
 
 
 For node $i$:
 
-$$H_{\text{node}}(i) = \text{fract}\left( \text{fract}(\text{mtime}_i \cdot K_1) + \text{fract}(\text{size}_i \cdot K_2) + \text{fract}(i \cdot K_3) \right)$$
+$$H_{\text{node}}(i) = \text{descenthash\_fract}\left( \text{descenthash\_fract}(\text{mtime}_i \cdot \text{descenthash\_k1}) + \text{descenthash\_fract}(\text{size}_i \cdot \text{descenthash\_k2}) + \text{descenthash\_fract}(i \cdot \text{descenthash\_k3}) \right)$$
 
 ### C. Hierarchical Aggregation (Descent Hashing)
 To compute a directory's hash from its children without strict sorting (which causes allocations and CPU cycles):
 
-$$H_{\text{dir}} = \text{fract}\left( H_{\text{node}}(\text{dir}) \cdot K_4 + \sum_{c \in \text{children}} (H_{\text{node}}(c) \cdot K_1) \right)$$
+$$H_{\text{dir}} = \text{descenthash\_fract}\left( H_{\text{node}}(\text{dir}) \cdot \text{descenthash\_k4} + \sum_{c \in \text{children}} (H_{\text{node}}(c) \cdot \text{descenthash\_k1}) \right)$$
 
 *Note on Determinism:* Since floating-point addition is not strictly associative due to rounding limits, we sum children in strict ascending order of their `Node ID` (which is already sorted sequentially in the heap layout by creation order).
 
@@ -66,9 +66,9 @@ $$H_{\text{dir}} = \text{fract}\left( H_{\text{node}}(\text{dir}) \cdot K_4 + \s
 * **The Strategy (Incremental Hashing):**
   * Store node hashes in the buffer itself (reserving 4 or 8 bytes of the 32-byte stride for the node's cached hash).
   * When a file node changes, calculate its new $H_{\text{node}}$.
-  * Bubble the change up to its parent by executing:
+  * Bubble the change up to its parent (`descenthash_update_bubble`) by executing:
 
-    $$H_{\text{parent-new}} = \text{fract}\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot K_1 + H_{\text{child-new}} \cdot K_1 \right)$$
+    $$H_{\text{parent-new}} = \text{descenthash\_fract}\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot \text{descenthash\_k1} + H_{\text{child-new}} \cdot \text{descenthash\_k1} \right)$$
 
   * This allows $O(1)$ complexity updates for file writes without re-scanning the entire volume.
 

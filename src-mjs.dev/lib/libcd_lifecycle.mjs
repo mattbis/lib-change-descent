@@ -3,49 +3,49 @@
  * just gets complicated, so for now I'm thinking thisArg.. as simple as possible.
  */
 
-import { run_operation, libcd_micro_pause } from './internal/op/libcd_operation.mjs'
+import { operation_run_pipeline, libcd_micro_pause } from './internal/op/libcd_operation.mjs'
 import { run_pre_op_check, run_self_check } from './internal/self_check/libcd_self_check.mjs'
 
-export async function _house_keep(options= {}) {
+export async function lifecycle_house_keep(options= {}) {
     var ctx= this || options.ctx
-    return run_operation(ctx, async function() {
+    return operation_run_pipeline(ctx, async function() {
         if (ctx) run_self_check(ctx)
         await libcd_micro_pause.yield(ctx, 'house_keep')
     }, options)
 }
 
-export async function start(options= {}) {
+export async function lifecycle_start(options= {}) {
     var ctx= this || options.ctx
-    return resume.call(ctx, options)
+    return lifecycle_resume.call(ctx, options)
 }
 
-export async function background(options= {}) {
+export async function lifecycle_background(options= {}) {
     var ctx= this || options.ctx
     if (ctx) ctx.profile= '+bg'
     await libcd_micro_pause.yield(ctx, 'mode_switch')
 }
 
-export async function foreground(options= {}) {
+export async function lifecycle_foreground(options= {}) {
     var ctx= this || options.ctx
     if (ctx) ctx.profile= '+fg'
     await libcd_micro_pause.yield(ctx, 'mode_switch')
 }
 
-export async function abort(options= {}) {
+export async function lifecycle_abort(options= {}) {
     var ctx= this || options.ctx
     if (ctx && ctx.abort_flag) {
         // TODO (matt): signal abort flag in atomic control buffer
     }
 }
 
-export async function stop(options= {}) {
+export async function lifecycle_stop(options= {}) {
     var ctx= this || options.ctx
-    await abort.call(ctx, options)
+    await lifecycle_abort.call(ctx, options)
 }
 
-export async function resume(options= {}) {
+export async function lifecycle_resume(options= {}) {
     var ctx= this || options.ctx
-    return run_operation(ctx, async function() {
+    return operation_run_pipeline(ctx, async function() {
         if (ctx) run_pre_op_check(ctx)
         await libcd_micro_pause.yield(ctx, 'resume')
     }, options)

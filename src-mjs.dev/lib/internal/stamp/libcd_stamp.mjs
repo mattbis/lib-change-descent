@@ -43,5 +43,6 @@ export function stamp_record(event_name, details = {}) {
     return entry_payload
 }
 
-/** backward compatibility / convenient short alias */
-export const stamp = (event_name, details = {}) => stamp_record(event_name, details)
+export function stamp(event_name, details = {}) {
+    return stamp_record(event_name, details)
+}

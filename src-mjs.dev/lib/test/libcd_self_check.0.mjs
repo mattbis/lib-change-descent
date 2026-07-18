@@ -2,7 +2,7 @@ import test from "node:test"
 import assert from "node:assert"
 import { invariant } from "../libcd_invariant.mjs"
 import { run_self_check, run_pre_op_check } from "../internal/self_check/libcd_self_check.mjs"
-import { create_node_accessor, NODE_STRIDE } from "../node/libcd_struct_offset_manager.0.mjs"
+import { node_create_accessor, NODE_STRIDE } from "../node/libcd_struct_offset_manager.0.mjs"
 
 // 0. check db & storage primitives self-check orchestration
 test("libcd_self_check: pre_op_check and run_self_check orchestration", () => {
@@ -27,7 +27,7 @@ test("libcd_self_check: pre_op_check and run_self_check orchestration", () => {
 
 test("libcd_self_check: zero-GC SharedArrayBuffer node struct accessors", () => {
   const sab = new SharedArrayBuffer(NODE_STRIDE * 4) // 4 nodes
-  const accessor = create_node_accessor(sab)
+  const accessor = node_create_accessor(sab)
   const node_id = 1
   const CANARY_VAL = 0xAA
 
@@ -77,7 +77,7 @@ test("libcd_self_check: zero-GC SharedArrayBuffer node struct accessors", () => 
   })
 })
 
-import { run_operation, libcd_micro_pause } from "../internal/op/libcd_operation.mjs"
+import { operation_run_pipeline, libcd_micro_pause } from "../internal/op/libcd_operation.mjs"
 
 test("libcd_operation: composed operation pipelines, retry boundaries, and micro pauses", async () => {
   // 1. Verify micro pause factors
@@ -120,7 +120,7 @@ test("libcd_operation: composed operation pipelines, retry boundaries, and micro
     }
   ]
 
-  await run_operation(ctx, steps)
+  await operation_run_pipeline(ctx, steps)
 
   assert.strictEqual(attempts, 2, "Step 1 retried exactly once before succeeding")
   assert.strictEqual(step_1_ran, true, "Step 1 completed successfully")
@@ -128,21 +128,21 @@ test("libcd_operation: composed operation pipelines, retry boundaries, and micro
 })
 
 import {
-  compute_single_hash,
-  compute_node_hash,
-  compute_descent_hash,
-  bubble_incremental_hash,
-  fract
-} from "../internal/hash/libcd_decent_descent_hash.mjs"
+  descenthash_compute_single,
+  descenthash_compute_node,
+  descenthash_compute_descent,
+  descenthash_update_bubble,
+  descenthash_fract
+} from "../internal/hash/libcd_descent_hash.mjs"
 
-test("libcd_decent_descent_hash: zero-GC float hashing and O(1) incremental bubble updates", () => {
+test("libcd_descent_hash: zero-GC float hashing and O(1) incremental bubble updates", () => {
   // 1. Verify fract bounds across positive and negative inputs
-  assert.strictEqual(fract(1.75), 0.75)
-  assert.strictEqual(Number((fract(-0.25)).toFixed(4)), 0.75) // -0.25 - (-1) = 0.75
+  assert.strictEqual(descenthash_fract(1.75), 0.75)
+  assert.strictEqual(Number((descenthash_fract(-0.25)).toFixed(4)), 0.75) // -0.25 - (-1) = 0.75
 
   // 2. Setup SharedArrayBuffer with 3 nodes (Dir 0, Child 1, Child 2)
   const sab = new SharedArrayBuffer(NODE_STRIDE * 3)
-  const accessor = create_node_accessor(sab)
+  const accessor = node_create_accessor(sab)
 
   // Dir 0
   accessor.set_m_time(0, 1700000000000)
@@ -156,21 +156,21 @@ test("libcd_decent_descent_hash: zero-GC float hashing and O(1) incremental bubb
   accessor.set_m_time(2, 1700000020000)
   accessor.set_size(2, 2048)
 
-  const child_1_hash = compute_node_hash(accessor, 1)
-  const child_2_hash = compute_node_hash(accessor, 2)
-  const dir_hash_initial = compute_descent_hash(accessor, 0, [1, 2])
+  const child_1_hash = descenthash_compute_node(accessor, 1)
+  const child_2_hash = descenthash_compute_node(accessor, 2)
+  const dir_hash_initial = descenthash_compute_descent(accessor, 0, [1, 2])
 
   assert.ok(dir_hash_initial >= 0 && dir_hash_initial < 1, "Dir hash bounded in [0, 1)")
 
   // 3. Modify Child 1 (simulate file write) and compute both ways
   accessor.set_size(1, 5120) // updated size
-  const child_1_new_hash = compute_node_hash(accessor, 1)
+  const child_1_new_hash = descenthash_compute_node(accessor, 1)
 
   // Full recompute of dir hash
-  const dir_hash_recomputed = compute_descent_hash(accessor, 0, [1, 2])
+  const dir_hash_recomputed = descenthash_compute_descent(accessor, 0, [1, 2])
 
   // O(1) Incremental bubble update
-  const dir_hash_bubbled = bubble_incremental_hash(dir_hash_initial, child_1_hash, child_1_new_hash)
+  const dir_hash_bubbled = descenthash_update_bubble(dir_hash_initial, child_1_hash, child_1_new_hash)
 
   // Verify that O(1) bubbled hash exactly matches O(N) full recompute due to exact linear float contribution
   assert.strictEqual(Number(dir_hash_bubbled.toFixed(10)), Number(dir_hash_recomputed.toFixed(10)), "Incremental bubbled hash matches full tree recompute")

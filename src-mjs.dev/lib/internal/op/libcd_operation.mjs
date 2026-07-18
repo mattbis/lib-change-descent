@@ -37,9 +37,9 @@ export const libcd_micro_pause= {
 
 /**
  * execute an operation or composed pipeline of sub-operations using thisArg (ctx)
- * wraps steps inside try {} catch {} and delegates to retry_operation on failure
+ * wraps steps inside try {} catch {} and delegates to operation_retry_step on failure
  */
-export async function run_operation(ctx, steps_or_fn, options= {}) {
+export async function operation_run_pipeline(ctx, steps_or_fn, options= {}) {
     var steps= Array.isArray(steps_or_fn) ? steps_or_fn : [steps_or_fn]
     var max_retries= options.max_retries || ctx?.max_retries || 3
 
@@ -61,7 +61,7 @@ export async function run_operation(ctx, steps_or_fn, options= {}) {
                 if (attempt > max_retries) {
                     throw new Error(`[OP_EXHAUSTED]: step ${step.name || i} failed after ${max_retries} retries: ${err.message}`)
                 }
-                await retry_operation(ctx, err, attempt, step)
+                await operation_retry_step(ctx, err, attempt, step)
             }
         }
 
@@ -79,7 +79,7 @@ export async function run_operation(ctx, steps_or_fn, options= {}) {
 /**
  * handles operational failures within try {} catch {} boundaries
  */
-export async function retry_operation(ctx, err, attempt, step) {
+export async function operation_retry_step(ctx, err, attempt, step) {
     // TODO (matt): record failure snapshot to imut_log
     await libcd_micro_pause.retry_backoff(attempt, ctx)
 }
@@ -92,6 +92,6 @@ export class libcd_Operation {
     }
 
     async run(steps_or_fn) {
-        return run_operation(this.ctx, steps_or_fn, this.options)
+        return operation_run_pipeline(this.ctx, steps_or_fn, this.options)
     }
 }

@@ -42,8 +42,3 @@ export async function* hardware_create_disk_scheduler(disk_queue, options= {}) {
         await waitForSlot()
     }
 }
-
-/** backward compatibility alias */
-export async function* create_disk_scheduler(disk_queue, options= {}) {
-    return yield* hardware_create_disk_scheduler(disk_queue, options)
-}

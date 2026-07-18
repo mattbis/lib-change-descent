@@ -4,17 +4,21 @@
  * stores current known active and valid volumes, and all known possible unique volume ids
  */
 
-import { run_operation, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
+import { operation_run_pipeline, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
 import { LIBCD_IMPRINT_MAGIC } from '../../config/libcd_constants.mjs'
 
-/** there isn't one global state this refers to each volume provider and whether it still exists or not, is known or new... etc */
-export const VOLUME_SIG_STATE = {
-    ABORT: 0,
-    RUN: 1,
-    PROCESS: 2
+/** returns volume signal state map or branches if check state supplied */
+export function volume_sig_state(check_state) {
+    var state_map = {
+        ABORT: 0,
+        RUN: 1,
+        PROCESS: 2
+    }
+    if (check_state !== undefined && check_state !== null) {
+        return state_map[check_state] ?? check_state
+    }
+    return state_map
 }
-export const LIBCD_VOLUME_SIG_STATE = VOLUME_SIG_STATE
-export const SIG_STATE = VOLUME_SIG_STATE
 
 export const LIBCD_VOLE_MASK= {
 
@@ -187,7 +191,7 @@ export async function volume_imprint(target, hardware_id, imprint_options= {}) {
         return true
     }
 
-    return run_operation(target, async function imprint_step() {
+    return operation_run_pipeline(target, async function imprint_step() {
         target.activity_mask= volume_add_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write)
         try {
             // write ownership manifest to `\libcd\var\db` using the 32-bit magic imprint

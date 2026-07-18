@@ -56,4 +56,4 @@
 
 - group functions by the topic ( ie usually the folder they live in ) - and the name of the file
 
-- prefer `decenthash_compute_hash()` instead of `compute_single_hash()` this makes searching for a group much easier
+- prefer `descenthash_compute_single()` instead of `compute_single_hash()` this makes searching for a group much easier

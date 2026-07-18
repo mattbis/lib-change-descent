@@ -1,4 +1,4 @@
-import { disk_fingerprint_get } from '../os/win/libcd_disk_fingerprint.mjs'
+import { disk_fingerprint } from '../os/win/libcd_disk_fingerprint.mjs'
 import { volume_has_known_id, volume_add_known_id } from '../storage/libcd_volume.mjs'
 
 /**
@@ -11,7 +11,7 @@ import { volume_has_known_id, volume_add_known_id } from '../storage/libcd_volum
 export async function hardware_identify_disk(volume_path, options= {}) {
     var uuid
     try {
-        uuid= disk_fingerprint_get(volume_path) // Platform specific (wmic/lsblk)
+        uuid= disk_fingerprint(volume_path) // Platform specific (wmic/lsblk)
     } catch (err) {
         if (options.fallback_uuid) {
             uuid= options.fallback_uuid
@@ -28,9 +28,4 @@ export async function hardware_identify_disk(volume_path, options= {}) {
     }
 
     return { uuid: uuid, type: options.type || 'ssd', newly_discovered: false }
-}
-
-/** backward compatibility alias */
-export async function identify_disk(volume_path, options= {}) {
-    return hardware_identify_disk(volume_path, options)
 }
