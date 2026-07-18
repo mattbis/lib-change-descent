@@ -18,10 +18,10 @@ A lightweight, non-cryptographic, zero-allocation hierarchical hashing algorithm
 JavaScript represents all numbers as 64-bit IEEE 754 double-precision floats. Instead of typical 32-bit integer hashing (which forces V8 to convert back and forth between float registers and 32-bit integer representations), the **Descent Hash** operates entirely in the $[0, 1)$ float domain.
 
 ### A. Fractional Part Hashing (`descenthash_fract`)
-For any float value $x$:
+For any float value $x$, we define the fractional function $F(x)$:
 
 ```math
-\operatorname{descenthash\_fract}(x) = x - \lfloor x \rfloor
+F(x) = x - \lfloor x \rfloor
 ```
 
 In JavaScript (`libcd_descent_hash.mjs`):
@@ -40,21 +40,21 @@ Each node in the 32-byte stride buffer contains metadata at fixed offsets:
 * **mtime** (bytes 16–23, `f64_view`)
 * **size** (bytes 24–27 or 24–31, depending on layout)
 
-We define irrational scaling factors (`descenthash_k1` .. `descenthash_k4`) to disperse values across the floating-point domain:
+We define irrational scaling factors ($k_1, k_2, k_3, k_4$) (`descenthash_k1` .. `descenthash_k4`) to disperse values across the floating-point domain:
 
 ```math
 \begin{aligned}
-\operatorname{descenthash\_k1} &= \sqrt{2} \approx 1.4142135623730951 \\
-\operatorname{descenthash\_k2} &= \sqrt{3} \approx 1.7320508075688772 \\
-\operatorname{descenthash\_k3} &= \sqrt{5} \approx 2.2360679774997897 \\
-\operatorname{descenthash\_k4} &= \sqrt{7} \approx 2.6457513110645906
+k_1 &= \sqrt{2} \approx 1.4142135623730951 \\
+k_2 &= \sqrt{3} \approx 1.7320508075688772 \\
+k_3 &= \sqrt{5} \approx 2.2360679774997897 \\
+k_4 &= \sqrt{7} \approx 2.6457513110645906
 \end{aligned}
 ```
 
 For node $i$:
 
 ```math
-H_{\text{node}}(i) = \operatorname{descenthash\_fract}\left( \operatorname{descenthash\_fract}(\text{mtime}_i \cdot k_1) + \operatorname{descenthash\_fract}(\text{size}_i \cdot k_2) + \operatorname{descenthash\_fract}(i \cdot k_3) \right)
+H_{\text{node}}(i) = F\left( F(\text{mtime}_i \cdot k_1) + F(\text{size}_i \cdot k_2) + F(i \cdot k_3) \right)
 ```
 
 In JavaScript:
@@ -71,7 +71,7 @@ export function descenthash_compute_single(mtime, size, id) {
 To compute a directory's hash from its children without strict sorting (which causes allocations and CPU cycles):
 
 ```math
-H_{\text{dir}} = \operatorname{descenthash\_fract}\left( H_{\text{node}}(\text{dir}) \cdot k_4 + \sum_{c \in \text{children}} \left( H_{\text{node}}(c) \cdot k_1 \right) \right)
+H_{\text{dir}} = F\left( H_{\text{node}}(\text{dir}) \cdot k_4 + \sum_{c \in \text{children}} \left( H_{\text{node}}(c) \cdot k_1 \right) \right)
 ```
 
 *Note on Determinism:* Since floating-point addition is not strictly associative due to rounding limits, we sum children in strict ascending order of their `Node ID` (which is already sorted sequentially in the heap layout by creation order).
@@ -95,7 +95,7 @@ H_{\text{dir}} = \operatorname{descenthash\_fract}\left( H_{\text{node}}(\text{d
   * Bubble the change up to its parent (`descenthash_update_bubble`) by executing:
 
 ```math
-H_{\text{parent-new}} = \operatorname{descenthash\_fract}\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot k_1 + H_{\text{child-new}} \cdot k_1 \right)
+H_{\text{parent-new}} = F\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot k_1 + H_{\text{child-new}} \cdot k_1 \right)
 ```
 
 In JavaScript ($O(1)$ bubble update):
