@@ -2,7 +2,7 @@
  * Reads the OS filesystem change journal for a volume (NTFS USN on Windows, fanotify on Linux).
  * 
  * For full architectural design, binary structures, and Zig integration details,
- * see {@link file:///i:/lib/usr/lib-change-descent/doc/os_journal.md}.
+ * see {@link ../../../doc/os_journal.md}.
  */
 
 import { spawn } from 'node:child_process';

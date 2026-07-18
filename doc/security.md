@@ -28,7 +28,7 @@ Whenever the engine builds lookup tables for command-line arguments, string path
 
 ### B. Safe Option Extraction (`arg_get_opt` & `Object.hasOwn`)
 When parsing configuration objects passed from external tool drivers or class constructors (`options || {}`), standard destructuring or logical OR (`options.max_retries || 3`) can accidentally pull properties off a polluted `Object.prototype`.
-We use our canonical option extractor [`arg_get_opt(opts, key, default_val)`](file:///i:/lib/usr/lib-change-descent/src-mjs.dev/lib/arg/libcd_arg.mjs#L59-L65), backed by `Object.hasOwn`:
+We use our canonical option extractor [`arg_get_opt(opts, key, default_val)`](../src-mjs.dev/lib/arg/libcd_arg.mjs#L59-L65), backed by `Object.hasOwn`:
 ```javascript
 export function arg_get_opt(opts, key, default_val= null) {
     if (!opts || (typeof opts !== "object" && typeof opts !== "function")) return default_val
@@ -82,7 +82,7 @@ When data or control signals cross the **MJS $\leftrightarrow$ Zig boundary** (`
 ### A. Fixed Binary Frames & Magic Byte Verification
 To prevent out-of-bounds (`OOB`) buffer overruns or corrupted USN record crashes when reading from `SharedArrayBuffer` or IPC streams:
 * Every binary packet crossing from Zig to MJS must begin with a packed header struct (`LibcdEventHeader`) containing exact length boundaries and our verification magic word (`magic_bytes = 0xCDCD`).
-* Before parsing payload fields, the MJS receiver validates the header using our zero-GC fast comparator [`arg_parse_binary_header(u8_view, offset, MAGIC_BYTES)`](file:///i:/lib/usr/lib-change-descent/src-mjs.dev/lib/arg/libcd_arg.mjs#L51-L56). Malformed or unverified packets are rejected immediately without causing V8 memory corruption.
+* Before parsing payload fields, the MJS receiver validates the header using our zero-GC fast comparator [`arg_parse_binary_header(u8_view, offset, MAGIC_BYTES)`](../src-mjs.dev/lib/arg/libcd_arg.mjs#L51-L56). Malformed or unverified packets are rejected immediately without causing V8 memory corruption.
 
 ### B. Zero-Decode Hot Loop Protection (String Bomb Immunity)
 Windows USN journal names (`WCHAR`) are arbitrary UTF-16LE strings. To prevent memory exhaustion or prototype poisoning via hidden control sequences:
