@@ -342,6 +342,61 @@ test("libcd_security: Object.freeze boundaries, null-prototype maps, and prototy
   }
 })
 
+import { ctx_create, ctx_profile, ctx_buffer, libcd_Context } from "../internal/ctx/libcd_ctx.mjs"
+import {
+  change_graph_init,
+  change_graph_record,
+  change_graph_decay,
+  change_graph_emit_scalar,
+  change_graph_emit_vector_svg,
+  change_graph_emit_bitmap,
+  libcd_ChangeGraph
+} from "../render/libcd_change_graph.mjs"
+
+test("libcd_change_graph & libcd_ctx: lifecycle context buffer pools, entropy accumulation, decay sweeps, and SVG/bitmap output", () => {
+  // 1. Verify lifecycle context creation and null-prototype / map registries
+  var ctx = ctx_create({ change_graph_buckets: 16, profile: "+resident" })
+  assert.strictEqual(ctx_profile(ctx), "+resident", "Context profile accessor reads correctly")
+  assert.strictEqual(ctx_profile(ctx, "+fg"), "+fg", "Context profile accessor writes and returns new profile")
+  assert.ok(ctx_buffer(ctx, "change_graph_buffer") instanceof Float32Array, "Change graph scalar buffer is initialized inside ctx")
+  assert.strictEqual(ctx_buffer(ctx, "change_graph_buffer").length, 16, "Buffer matches configured bucket count")
+
+  // 2. Verify change graph recording and clamping across buckets
+  var val0 = change_graph_record(ctx, 0, 0.5)
+  assert.strictEqual(val0, 0.5, "Node 0 recorded 0.5 entropy")
+  var val0_max = change_graph_record(ctx, 0, 0.8)
+  assert.strictEqual(val0_max, 1.0, "Node 0 entropy clamped to 1.0 maximum")
+
+  // Record node 4 and node 8
+  change_graph_record(ctx, 4, 0.4)
+  change_graph_record(ctx, 8, 0.2)
+
+  // 3. Verify decay sweep behavior
+  change_graph_decay(ctx, 0.5) // Decay by 50%
+  var scalar_view = change_graph_emit_scalar(ctx)
+  assert.strictEqual(Number(scalar_view[0].toFixed(4)), 0.5, "Bucket 0 decayed from 1.0 to 0.5")
+  assert.strictEqual(Number(scalar_view[4].toFixed(4)), 0.2, "Bucket 4 decayed from 0.4 to 0.2")
+  assert.strictEqual(Number(scalar_view[8].toFixed(4)), 0.1, "Bucket 8 decayed from 0.2 to 0.1")
+
+  // 4. Verify SVG vector path output format
+  var svg_path = change_graph_emit_vector_svg(ctx, { width: 150, height: 100 })
+  assert.ok(svg_path.startsWith("M "), "SVG path starts with MoveTo command")
+  assert.ok(svg_path.includes("L "), "SVG path contains LineTo commands")
+
+  // 5. Verify 2D quantized Uint8Array bitmap grid output
+  var bitmap = change_graph_emit_bitmap(ctx, 4, 4) // 4x4 grid (16 pixels total)
+  assert.ok(bitmap instanceof Uint8Array, "Bitmap returns a Uint8Array grid")
+  assert.strictEqual(bitmap.length, 16, "Bitmap grid dimensions exactly match width * height")
+
+  // 6. Verify Dual Surface class wrapper (`libcd_ChangeGraph`) delegates cleanly
+  var class_ctx = new libcd_Context({ change_graph_buckets: 8 })
+  var graph = new libcd_ChangeGraph(class_ctx.ctx, 8)
+  graph.record(2, 0.75)
+  assert.strictEqual(graph.emit_scalar()[2], 0.75, "Class wrapper delegates record and emit_scalar accurately")
+  assert.ok(graph.emit_vector_svg().length > 0, "Class wrapper emits vector SVG paths")
+  assert.strictEqual(graph.emit_bitmap(2, 2).length, 4, "Class wrapper emits quantized bitmap")
+})
+
 
 
 
