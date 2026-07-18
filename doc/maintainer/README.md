@@ -11,3 +11,7 @@ This directory contains guides and reference documentation for project maintaine
 
 2. **[Maintainer Roadmap](file:///i:/lib/usr/lib-change-descent/doc/maintainer_roadmap.md)** (`../maintainer_roadmap.md`)
    - High-level phases for the library's lifecycle: Node core version, schema-generated configuration, Zig high-performance engine (`src-zig.main`), and resident process hardening.
+
+3. **[Custom Node.js Runtime & Network Lockdown](file:///i:/lib/usr/lib-change-descent/doc/maintainer/custom_nodejs_build.md)** (`custom_nodejs_build.md`)
+   - Details the 3 enterprise levels for running `lib-change-descent` without network access (`node:net`, `node:http`, `fetch`).
+   - Covers Level 1 (`libcd_net_lockdown.mjs` pre-boot hooks & `--permission` flags), Level 2 (Single Executable Applications `SEA` standalone binary bundles), and Level 3 (`--without-ssl --without-net` C++ source compilation).

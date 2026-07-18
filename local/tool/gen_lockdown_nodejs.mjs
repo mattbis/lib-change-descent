@@ -22,6 +22,10 @@ export function gen_lockdown_script(options= {}) {
     var target= arg_get_opt(options, 'target', process.platform === 'win32' ? 'windows' : 'linux')
     var entry= arg_get_opt(options, 'entry', 'src-mjs.main/libcd_main.mjs')
     var extra_flags= arg_get_opt(options, 'flags', '--frozen-intrinsics --no-warnings')
+    var net_lockdown= arg_get_opt(options, 'net-lockdown', true)
+    if (net_lockdown && !extra_flags.includes('libcd_net_lockdown.mjs')) {
+        extra_flags= extra_flags + ' --import ./local/tool/libcd_net_lockdown.mjs'
+    }
 
     if (target === 'osx' || target === 'darwin') {
         throw new Error('[LOCKDOWN] OSX/Darwin target is not supported (`doc/maintainer/guard_and_promotion.md`).')
