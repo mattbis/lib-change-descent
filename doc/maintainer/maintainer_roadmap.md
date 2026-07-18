@@ -14,3 +14,14 @@ ive many scripts this will use.... its more so i have consistency across many vo
 --- verify full prototype pollution immunity and zero-GC invariant boundaries (`self_check`).
 
 5. production releases (`src-mjs.main` / `src-zig.main`), esbuild runtime banner options, and continuous multi-drive verification.
+
+---
+
+### Thought on Composable Architecture & Static Dependency Security
+
+Given that our dependencies are static (`1p/2p` discipline, no `node_modules` bloat), there are no supply chain attacks to defend against. Furthermore, assuming the local runtime environment and operator are savvy and secure, we do not need to bog down hot execution paths (`execa`-inspired process execution, `+gate` arg verification) with heavy runtime security overhead.
+
+Instead, the roadmap embraces a **Composable Architecture**:
+* **Core Constructs (`src-mjs.dev`):** Unboxed, zero-GC, monomorphic functional blocks dedicated entirely to maximum mechanical sympathy.
+* **Build Modifiers (`var/build` & Wrappers):** Rather than cluttering core loops, security layers (`esbuild` global freeze banners, WFP network isolation, boundary object sealing) are composed on top via higher-order build modifiers when crossing untrusted execution boundaries.
+

@@ -30,6 +30,14 @@ The first part of how lkman is going to work...  This probably exists elsewhere 
 - [ ] Immutable Manifest Storage (flush thresholds)
 - [ ] Comprehensive Benchmarking & Stress Testing vs Chokidar
 
+### Thought on Composable Architecture & Static Dependency Security
+
+As `lib-change-descent` scales across operating systems and execution targets, we recognize that **security and mechanical sympathy should not fight for the hot path**. Because our dependencies are strictly static (`1p/2p` discipline, zero `node_modules` bloat), **there are no supply chain attacks to defend against**. Furthermore, because we assume our runtime environment and operator are secure and savvy, we do not need to bog down our core binary struct accessors or execution pipelines (`execa`-inspired unified execution, `+gate` process modification) with heavy runtime security layers.
+
+Instead, our roadmap moves toward a deeply **Composable Architecture**:
+1. **Core Execution Engine (`src-mjs.dev`):** Unboxed, zero-GC, monomorphic functional constructs whose sole responsibility is high-throughput descent hashing and volume traversal at C-like speeds.
+2. **Layered Security via Build Modifiers (`var/build` & Wrappers):** When crossing untrusted boundaries, packaging for public distribution, or isolating resident processes, higher-order **Build Modifiers** dynamically compose security layers around the core constructs (e.g., injecting global `esbuild` freeze banners, wrapping execution inside WFP ring-0 network isolation, or enforcing boundary object sealing). This ensures our inner loops stay clean, fast, and unburdened while security is cleanly composed on demand.
+
 
 ## STRING HEAP MITIGATION
 
