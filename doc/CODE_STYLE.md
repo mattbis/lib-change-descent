@@ -1,5 +1,6 @@
 ### mostly mjs at the moment
 
+- do not circular loop but ensure here is understod in compound with lib_structure
 - prefer single quotes, double quotes are used for magical situations
 - resident process hardening & defensive coding (see `doc/security.md`):
   - dictionaries and string/path caches must use `Object.create(null)` or `new Map()`, never plain `{}`.
