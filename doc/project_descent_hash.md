@@ -20,33 +20,59 @@ JavaScript represents all numbers as 64-bit IEEE 754 double-precision floats. In
 ### A. Fractional Part Hashing (`descenthash_fract`)
 For any float value $x$:
 
-$$\text{descenthash\_fract}(x) = x - \lfloor x \rfloor$$
+```math
+\operatorname{descenthash\_fract}(x) = x - \lfloor x \rfloor
+```
+
+In JavaScript (`libcd_descent_hash.mjs`):
+```javascript
+export function descenthash_fract(x) {
+    return x - Math.floor(x)
+}
+```
 
 Using fractional parts keeps the accumulator bounded within $[0, 1)$, completely preventing overflow issues or loss of precision from large numbers.
 
-### B. Single Node Hash
+### B. Single Node Hash (`descenthash_compute_single`)
 Each node in the 32-byte stride buffer contains metadata at fixed offsets:
 * **Node ID** (derived from its stride index)
 * **Parent ID** (bytes 4–7, `i32_view`)
 * **mtime** (bytes 16–23, `f64_view`)
 * **size** (bytes 24–27 or 24–31, depending on layout)
 
-We define irrational scaling factors (`descenthash_k1` .. `descenthash_k4`) to disperse values:
+We define irrational scaling factors (`descenthash_k1` .. `descenthash_k4`) to disperse values across the floating-point domain:
 
-$$\text{descenthash\_k1} = \sqrt{2} \approx 1.4142135623730951$$
-$$\text{descenthash\_k2} = \sqrt{3} \approx 1.7320508075688772$$
-$$\text{descenthash\_k3} = \sqrt{5} \approx 2.2360679774997897$$
-$$\text{descenthash\_k4} = \sqrt{7} \approx 2.6457513110645906$$
-
+```math
+\begin{aligned}
+\operatorname{descenthash\_k1} &= \sqrt{2} \approx 1.4142135623730951 \\
+\operatorname{descenthash\_k2} &= \sqrt{3} \approx 1.7320508075688772 \\
+\operatorname{descenthash\_k3} &= \sqrt{5} \approx 2.2360679774997897 \\
+\operatorname{descenthash\_k4} &= \sqrt{7} \approx 2.6457513110645906
+\end{aligned}
+```
 
 For node $i$:
 
-$$H_{\text{node}}(i) = \text{descenthash\_fract}\left( \text{descenthash\_fract}(\text{mtime}_i \cdot \text{descenthash\_k1}) + \text{descenthash\_fract}(\text{size}_i \cdot \text{descenthash\_k2}) + \text{descenthash\_fract}(i \cdot \text{descenthash\_k3}) \right)$$
+```math
+H_{\text{node}}(i) = \operatorname{descenthash\_fract}\left( \operatorname{descenthash\_fract}(\text{mtime}_i \cdot k_1) + \operatorname{descenthash\_fract}(\text{size}_i \cdot k_2) + \operatorname{descenthash\_fract}(i \cdot k_3) \right)
+```
 
-### C. Hierarchical Aggregation (Descent Hashing)
+In JavaScript:
+```javascript
+export function descenthash_compute_single(mtime, size, id) {
+    var h_time= descenthash_fract(mtime * descenthash_k1)
+    var h_size= descenthash_fract(size * descenthash_k2)
+    var h_id= descenthash_fract(id * descenthash_k3)
+    return descenthash_fract(h_time + h_size + h_id)
+}
+```
+
+### C. Hierarchical Aggregation (`descenthash_compute_dir`)
 To compute a directory's hash from its children without strict sorting (which causes allocations and CPU cycles):
 
-$$H_{\text{dir}} = \text{descenthash\_fract}\left( H_{\text{node}}(\text{dir}) \cdot \text{descenthash\_k4} + \sum_{c \in \text{children}} (H_{\text{node}}(c) \cdot \text{descenthash\_k1}) \right)$$
+```math
+H_{\text{dir}} = \operatorname{descenthash\_fract}\left( H_{\text{node}}(\text{dir}) \cdot k_4 + \sum_{c \in \text{children}} \left( H_{\text{node}}(c) \cdot k_1 \right) \right)
+```
 
 *Note on Determinism:* Since floating-point addition is not strictly associative due to rounding limits, we sum children in strict ascending order of their `Node ID` (which is already sorted sequentially in the heap layout by creation order).
 
@@ -54,21 +80,31 @@ $$H_{\text{dir}} = \text{descenthash\_fract}\left( H_{\text{node}}(\text{dir}) \
 
 ## 3. Volume Species Adaptation
 
-### A. Volatile Volumes (e.g., RAM disk, Volatile USB)
+### A. Volatile Volumes (`descenthash_probe_volatile`)
 * **The Problem:** Rapid changes. Walking the entire tree on every operation is too expensive.
 * **The Strategy (Stochastic Sampling):** 
   * Do not calculate the full tree. 
   * Calculate $H$ of the root directory plus a pseudo-random subset of nodes based on a sliding index pointer (a "rolling probe" of $N$ nodes per operation).
   * Check the filesystem's global file count or transaction sequence number as a cheap fast-path detector.
 
-### B. Fixed Volumes (e.g., SSD, HDD)
+### B. Fixed Volumes (`descenthash_update_bubble`)
 * **The Problem:** Massive capacity, but slower/ordered drift.
 * **The Strategy (Incremental Hashing):**
   * Store node hashes in the buffer itself (reserving 4 or 8 bytes of the 32-byte stride for the node's cached hash).
   * When a file node changes, calculate its new $H_{\text{node}}$.
   * Bubble the change up to its parent (`descenthash_update_bubble`) by executing:
 
-    $$H_{\text{parent-new}} = \text{descenthash\_fract}\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot \text{descenthash\_k1} + H_{\text{child-new}} \cdot \text{descenthash\_k1} \right)$$
+```math
+H_{\text{parent-new}} = \operatorname{descenthash\_fract}\left( H_{\text{parent-old}} - H_{\text{child-old}} \cdot k_1 + H_{\text{child-new}} \cdot k_1 \right)
+```
+
+In JavaScript ($O(1)$ bubble update):
+```javascript
+export function descenthash_update_bubble(parent_old_hash, child_old_hash, child_new_hash) {
+    var delta= (child_new_hash * descenthash_k1) - (child_old_hash * descenthash_k1)
+    return descenthash_fract(parent_old_hash + delta)
+}
+```
 
   * This allows $O(1)$ complexity updates for file writes without re-scanning the entire volume.
 
