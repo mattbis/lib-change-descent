@@ -1,5 +1,9 @@
 ### mostly mjs at the moment
 
+- resident process hardening & defensive coding (see `doc/security.md`):
+  - dictionaries and string/path caches must use `Object.create(null)` or `new Map()`, never plain `{}`.
+  - exported constant tables, protocol enums (`PROTOCOL_OP`), and vole masks must be frozen with `Object.freeze()`.
+  - constructor and driver options must be extracted safely (`arg_get_opt(opts, 'key', def)` or `Object.hasOwn()`), avoiding plain logical OR assignments (`options.foo || def`).
 - make the significant part of a declaration the important part in spacing semantics:-
   - prefer `var x= true`
   - prefer `function foo(a= )`

@@ -6,91 +6,92 @@
 
 import { operation_run_pipeline, libcd_micro_pause } from '../internal/op/libcd_operation.mjs'
 import { LIBCD_IMPRINT_MAGIC } from '../../config/libcd_constants.mjs'
+import { arg_get_opt } from '../arg/libcd_arg.mjs'
 
 /** returns volume signal state map or branches if check state supplied */
 export function volume_sig_state(check_state) {
-    var state_map = {
+    var state_map= Object.freeze({
         ABORT: 0,
         RUN: 1,
         PROCESS: 2
-    }
+    })
     if (check_state !== undefined && check_state !== null) {
-        return state_map[check_state] ?? check_state
+        return Object.hasOwn(state_map, check_state) ? state_map[check_state] : check_state
     }
     return state_map
 }
 
-export const LIBCD_VOLE_MASK= {
+export const LIBCD_VOLE_MASK= Object.freeze({
 
-    acl: {
+    acl: Object.freeze({
         probe_name_records: 0x01,
         descend_root: 0x02,
         descend_children: 0x04,
         must_io_exclusive: 0x08
-    },
-    read: {
+    }),
+    read: Object.freeze({
         query_root_dirs: 0x01,
         query_root_children: 0x02,
         seek_node_size: 0x04,
         is_vector: 0x08
-    },
-    speed: {
+    }),
+    speed: Object.freeze({
         no_restrictions: 0x01,
         careful_ramp: 0x02,
         system_controlled: 0x04,
         resident_monitored: 0x08
-    },
-    activity: {
+    }),
+    activity: Object.freeze({
         missing: 0x01,
         present: 0x02,
         busy: 0x03,       // 2 + 1 (present | missing)
         read: 0x04,
         write: 0x08,
         maintain: 0x10
-    },
-    history: {
+    }),
+    history: Object.freeze({
         previous_readings: 0x01
-    }
-}
+    })
+})
 
-export const LIBCD_VOL_SPECIES= {
-    fixed: { name: 'fixed', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions },
-    volatile: { name: 'volatile', default_speed: LIBCD_VOLE_MASK.speed.careful_ramp },
-    temporary: { name: 'temporary', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions }
-}
+export const LIBCD_VOL_SPECIES= Object.freeze({
+    fixed: Object.freeze({ name: 'fixed', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions }),
+    volatile: Object.freeze({ name: 'volatile', default_speed: LIBCD_VOLE_MASK.speed.careful_ramp }),
+    temporary: Object.freeze({ name: 'temporary', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions })
+})
 
-export const LIBCD_VOL_TYPE= {
-    ram: { species: 'volatile', io_exclusive: false },
-    vm: { species: 'fixed', io_exclusive: true },
-    ssd: { species: 'fixed', io_exclusive: false },
-    hdd: { species: 'fixed', io_exclusive: true }
-}
+export const LIBCD_VOL_TYPE= Object.freeze({
+    ram: Object.freeze({ species: 'volatile', io_exclusive: false }),
+    vm: Object.freeze({ species: 'fixed', io_exclusive: true }),
+    ssd: Object.freeze({ species: 'fixed', io_exclusive: false }),
+    hdd: Object.freeze({ species: 'fixed', io_exclusive: true })
+})
 
 /**
  * behavioral discovery strategies driven by active volume masks rather than rigid static loops
  */
-export const LIBCD_VOL_DISCOVER_STRATEGY= {
-    sequential: {
+export const LIBCD_VOL_DISCOVER_STRATEGY= Object.freeze({
+    sequential: Object.freeze({
         next: function(index, count, mask= 0) {
             if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
             return (index + 1 < count) ? index + 1 : -1
         }
-    },
-    staggered: {
+    }),
+    staggered: Object.freeze({
         next: function(index, count, mask= 0, step= 4) {
             if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
             var next_idx= index + step
             if (next_idx < count) return next_idx
             return (index + 1 < step && index + 1 < count) ? index + 1 : -1
         }
-    },
-    random_sample: {
+    }),
+    random_sample: Object.freeze({
         next: function(index, count, mask= 0) {
             if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
             return Math.floor(Math.random() * count)
         }
-    }
-}
+    })
+})
 
 /**
  * internal registries for volume ids and active instances
@@ -207,9 +208,11 @@ export async function volume_imprint(target, hardware_id, imprint_options= {}) {
 
 export class libcd_Volume {
     constructor(options= {}) {
-        this.type= options.type || 'ssd'
-        this.species= options.species || LIBCD_VOL_TYPE[this.type]?.species || 'fixed'
-        this.hardware_id= options.hardware_id || options.identifiers?.[0] || null
+        var opts= options || {}
+        this.type= arg_get_opt(opts, 'type', 'ssd') || 'ssd'
+        this.species= arg_get_opt(opts, 'species', null) || LIBCD_VOL_TYPE[this.type]?.species || 'fixed'
+        var identifiers= arg_get_opt(opts, 'identifiers', null) || []
+        this.hardware_id= arg_get_opt(opts, 'hardware_id', null) || identifiers[0] || null
         
         // initialize behavioral vole masks
         this.acl_mask= LIBCD_VOLE_MASK.acl.probe_name_records | LIBCD_VOLE_MASK.acl.descend_root | LIBCD_VOLE_MASK.acl.descend_children
@@ -224,7 +227,7 @@ export class libcd_Volume {
 
         this.d= {
             type_log: [],
-            identifiers: options.identifiers || (this.hardware_id ? [this.hardware_id] : []),
+            identifiers: identifiers || (this.hardware_id ? [this.hardware_id] : []),
             acl_log: []
         }
 

@@ -6,7 +6,7 @@
  */
 
 /** @enum {number} */
-export const PROTOCOL_OP = {
+export const PROTOCOL_OP = Object.freeze({
   // ---- Scan lifecycle ----
   START_SCAN: 0,
   PAUSE: 1,
@@ -16,7 +16,7 @@ export const PROTOCOL_OP = {
   // ---- Future: meta / library ops ----
   // ADD new ops here as the worker surface expands.
   // Never reuse or reassign existing op numbers — log compatibility depends on stable values.
-}
+})
 
 /**
  * Shared buffer bundle passed to each worker on dispatch.

@@ -1,0 +1,62 @@
+# lib-change-descent : Security & Resident Process Protection Manifest
+
+## 1. Threat Model: Resident Process Prototype Pollution
+Because `lib-change-descent` operates as a long-running (**resident**) engine monitoring complex filesystem activity across up to 21 active storage volumes, **prototype pollution (`__proto__`, `Object.prototype` injection)** is a critical threat vector to monitor.
+
+In a transient command-line utility, a polluted prototype exits cleanly when the process terminates. In a long-running resident process, however, a poisoned `Object.prototype` stays permanently in memory across the lifetime of the Main Thread and Worker Isolates, potentially hijacking subsequent scan cycles, driver configurations, or volume discovery loops.
+
+### ES Classes vs. Prototype Sugar
+ES `class` definitions do not naturally protect against prototype bleeding. Under the hood, JavaScript classes and instances inherit via the prototype chain. If an attacker pollutes `Object.prototype` (for example, setting `Object.prototype.must_io_exclusive = true` or `Object.prototype.max_retries = 999`), those properties bleed into class instances and options structures unless explicitly guarded.
+
+---
+
+## 2. The Data-Oriented Advantage: TypedArrays are Immune
+The classic prototype pollution exploit targets dynamic object property indexing (`obj[key] = value`). Because `lib-change-descent` strictly enforces **Data-Oriented Design** (`SharedArrayBuffer`, `Uint8Array`, `Int32Array`, and struct offset accessors inside `NODE_STRIDE`), the core engine loops are naturally immune:
+* Numeric index writes on typed arrays (`u8_view[offset + 4] = 0x12`) never traverse or consult `Object.prototype`.
+* Zero-GC binary comparators (`arg_slice_compare_fast`, `arg_slice_compare_secure_raw`) operate strictly on numeric bounds without allocating intermediate heap objects or inspecting property descriptors.
+
+---
+
+## 3. Pure MJS Mitigations Implemented Across `src-mjs.dev/`
+
+To secure the boundaries where our high-performance engine interacts with standard JavaScript objects (CLI arguments, driver configurations, and internal registries), we enforce three strict, zero-dependency (`// 1p`, `// 2p`) runtime mitigations:
+
+### A. Null-Prototype & `Map` Dictionaries (`Object.create(null)`)
+Whenever the engine builds lookup tables for command-line arguments, string paths, or volume IDs, it avoids plain objects (`{}`):
+* **`Map` Primitives:** Internal registries (`_known_volume_ids`, `_active_volumes` in `storage/libcd_volume.mjs`) use `new Map()`. `Map` lookups (`.get()`, `.set()`) use internal slots that completely bypass `Object.prototype`.
+* **Null-Prototype Dictionaries:** For flat options and flag tables (`arg_parse_cli` in `lib/arg/libcd_arg.mjs`), dictionaries are initialized using `Object.create(null)` (or `var options = Object.create(null)`). With zero prototype chain, even if `Object.prototype` is poisoned, index lookups (`if (options[flag])`) remain 100% uncompromised.
+
+### B. Safe Option Extraction (`arg_get_opt` & `Object.hasOwn`)
+When parsing configuration objects passed from external tool drivers or class constructors (`options || {}`), standard destructuring or logical OR (`options.max_retries || 3`) can accidentally pull properties off a polluted `Object.prototype`.
+We use our canonical option extractor [`arg_get_opt(opts, key, default_val)`](file:///i:/lib/usr/lib-change-descent/src-mjs.dev/lib/arg/libcd_arg.mjs#L59-L65), backed by `Object.hasOwn`:
+```javascript
+export function arg_get_opt(opts, key, default_val= null) {
+    if (!opts || (typeof opts !== "object" && typeof opts !== "function")) return default_val
+    return Object.hasOwn(opts, key) ? (opts[key] !== undefined ? opts[key] : default_val) : default_val
+}
+```
+* **Constructors Guarded:** `class libcd_Volume` uses `arg_get_opt` to safely resolve `type`, `species`, and `hardware_id` without prototype bleeding.
+* **Pipelines Guarded:** `operation_run_pipeline` in `libcd_operation.mjs` uses `arg_get_opt` to safely read `max_retries`, `skip_pre_check`, and `skip_post_check`.
+
+### C. Deep Freezing Constant Tables (`Object.freeze`)
+All static command maps, protocol operations, and vole masks are explicitly frozen upon export:
+* **Worker IPC Protocol (`libcd_worker_op.mjs`):** `PROTOCOL_OP` (`START_SCAN`, `PAUSE`, `RESUME`, `TERMINATE`) is wrapped in `Object.freeze()`.
+* **Vole Masks & Discover Strategies (`storage/libcd_volume.mjs`):** `LIBCD_VOLE_MASK` (and sub-maps `acl`, `read`, `speed`, `activity`, `history`), `LIBCD_VOL_SPECIES`, `LIBCD_VOL_TYPE`, and `LIBCD_VOL_DISCOVER_STRATEGY` are deeply frozen (`Object.freeze`).
+* **Micro Pause & Precedence (`libcd_operation.mjs`, `libcd_configure.mjs`):** `libcd_micro_pause.factors` and `CONFIG_PRECEDENCE` are frozen to prevent runtime mutation.
+
+---
+
+## 4. Why Native Mitigations Win Over Post-Build Hardening (Babel/SWC)
+
+We consciously choose to write code with these patterns in our source directory (`src-mjs.dev/`) rather than relying on complex post-compilation AST rewriting tools (`Babel`, `SWC`, `Terser` in `var/build`):
+1. **Zero Build Complexity (`1p/2p` Discipline):** Our library ships raw MJS or bundled files (`no-semicolon`, zero unnecessary `3p` build dependencies). Requiring Babel to rewrite every `{}` into `Object.create(null)` slows down development and complicates our clean release channels.
+2. **API Compatibility:** Automatic AST tools cannot distinguish when `{}` is intended for `JSON.stringify()` or a Node internal API (`node:fs`) versus an internal dictionary. Converting all `{}` to `Object.create(null)` automatically causes crashes when calling Node built-ins that expect `Object.prototype.toString`.
+3. **Explicit Behavior & Self-Check Verification:** By explicitly using `arg_get_opt`, `new Map()`, and `Object.freeze()`, our self-check test harness (`src-mjs.dev/lib/test/libcd_self_check.0.mjs`) behaviorally asserts and verifies (`test("libcd_security")`) exact prototype pollution immunity directly on our source code (`node --test`).
+
+### Optional Isolate Lockdown (`esbuild` Banner)
+If generating a unified bundle for production deployment (`var/build/libcd_bundle.mjs`), `esbuild` can inject a lightweight **Runtime Isolate Freeze Banner** at the top of the bundle without any Babel AST overhead:
+```javascript
+// esbuild --banner:js configuration
+"Object.freeze(Object.prototype); Object.freeze(Array.prototype);"
+```
+Freezing `Object.prototype` globally across the Isolate right at startup prevents any script within that compartment from mutating global prototypes, complementing our native source defenses cleanly.

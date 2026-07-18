@@ -2,14 +2,15 @@
 
 // 2p
 import { run_pre_op_check, run_self_check } from '../self_check/libcd_self_check.mjs'
+import { arg_get_opt } from '../../arg/libcd_arg.mjs'
 
 // factors of mod controlled micro pause.... 
-export const libcd_micro_pause= {
-    factors: {
+export const libcd_micro_pause= Object.freeze({
+    factors: Object.freeze({
         bg: 10,       // +bg profile: 10ms yield to prevent starving host CPU
         fg: 1,        // +fg profile: 1ms minimal yield during burst operations
         nolimits: 0   // -nolimits profile: 0ms zero-pause tight loop
-    },
+    }),
 
     get_factor: function(ctx) {
         var profile= ctx?.profile || 'bg'
@@ -34,18 +35,19 @@ export const libcd_micro_pause= {
             setTimeout(resolve, ms)
         })
     }
-}
+})
 
 /**
  * execute an operation or composed pipeline of sub-operations using thisArg (ctx)
  * wraps steps inside try {} catch {} and delegates to operation_retry_step on failure
  */
 export async function operation_run_pipeline(ctx, steps_or_fn, options= {}) {
+    var opts= options || {}
     var steps= Array.isArray(steps_or_fn) ? steps_or_fn : [steps_or_fn]
-    var max_retries= options.max_retries || ctx?.max_retries || 3
+    var max_retries= arg_get_opt(opts, 'max_retries', arg_get_opt(ctx, 'max_retries', 3)) || 3
 
-    if (options.skip_pre_check !== true && ctx) {
-        run_pre_op_check(ctx)
+    if (arg_get_opt(opts, 'skip_pre_check', false) !== true) {
+        if (ctx) run_pre_op_check(ctx)
     }
 
     for (var i= 0; i < steps.length; i++) {
@@ -72,8 +74,8 @@ export async function operation_run_pipeline(ctx, steps_or_fn, options= {}) {
         }
     }
 
-    if (options.skip_post_check !== true && ctx) {
-        run_self_check(ctx)
+    if (arg_get_opt(opts, 'skip_post_check', false) !== true) {
+        if (ctx) run_self_check(ctx)
     }
 }
 

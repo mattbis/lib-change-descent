@@ -2,11 +2,11 @@
 
 /// is teh base configuration layer, everything else is on top of this... per session., each session is unique
 
-export const CONFIG_PRECEDENCE= {
+export const CONFIG_PRECEDENCE = Object.freeze({
     'static':0,
     'command':1,
     'manifest':2
-}
+})
 
 /** 
  * options allows programmatic overriding of configuration

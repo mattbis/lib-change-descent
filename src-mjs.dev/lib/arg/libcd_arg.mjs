@@ -56,11 +56,20 @@ export function arg_parse_binary_header(u8_view, offset= 0, magic_bytes= null) {
 }
 
 /**
+ * safely extracts a property from an options object without traversing the prototype chain.
+ * prevents prototype pollution attacks (__proto__, Object.prototype) in resident processes.
+ */
+export function arg_get_opt(opts, key, default_val= null) {
+    if (!opts || (typeof opts !== "object" && typeof opts !== "function")) return default_val
+    return Object.hasOwn(opts, key) ? (opts[key] !== undefined ? opts[key] : default_val) : default_val
+}
+
+/**
  * parse standard cli arguments (process.argv slice) into options and positional args
- * uses standard fast comparisons since cli option names (--verbose, -D) are non-secret
+ * returns null-prototype options dictionary (Object.create(null)) immune to __proto__ injection
  */
 export function arg_parse_cli(args= []) {
-    var options= {}
+    var options= Object.create(null)
     var positionals= []
     var i= 0
     while (i < args.length) {
