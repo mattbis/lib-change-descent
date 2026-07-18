@@ -1,3 +1,5 @@
 node_modules
 var/build
 doc/.ai
+local/.secret
+var/*.lock
