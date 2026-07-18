@@ -7,7 +7,7 @@
 
 // 2p
 import { invariant } from '../../libcd_invariant.mjs'
-import { volume_get_active_volumes, volume_get_known_metadata } from '../../storage/libcd_volume.mjs'
+import { volume_get_active_volumes, volume_get_known_metadata, LIBCD_VOLE_MASK, volume_add_mask, volume_clear_mask } from '../../storage/libcd_volume.mjs'
 
 /**
  * space-prefixed function: assert_disk_vol_id
@@ -17,17 +17,27 @@ import { volume_get_active_volumes, volume_get_known_metadata } from '../../stor
 export function assert_disk_vol_id(target) {
     if (!target) return true
 
-    var is_removable= target.removable === true || target.species === 'removable' || target.species === 'volatile'
-    var is_added_default= target.added_by_default === true
+    if (typeof target.activity_mask === 'number') {
+        target.activity_mask= volume_add_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.maintain)
+    }
 
-    if (is_removable || is_added_default) {
-        var known_meta= target.hardware_id ? volume_get_known_metadata(target.hardware_id) : null
-        var is_imprinted= target.imprinted === true || (known_meta && known_meta.imprinted === true)
+    try {
+        var is_removable= target.removable === true || target.species === 'removable' || target.species === 'volatile'
+        var is_added_default= target.added_by_default === true
 
-        invariant(
-            is_imprinted,
-            `[VOL_ID_ASSERT] Volatile or removable volume (` + (target.hardware_id || 'unknown') + `) must be imprinted before access.`
-        )
+        if (is_removable || is_added_default) {
+            var known_meta= target.hardware_id ? volume_get_known_metadata(target.hardware_id) : null
+            var is_imprinted= target.imprinted === true || (known_meta && known_meta.imprinted === true)
+
+            invariant(
+                is_imprinted,
+                `[VOL_ID_ASSERT] Volatile or removable volume (` + (target.hardware_id || 'unknown') + `) must be imprinted before access.`
+            )
+        }
+    } finally {
+        if (typeof target.activity_mask === 'number') {
+            target.activity_mask= volume_clear_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.maintain)
+        }
     }
 
     return true

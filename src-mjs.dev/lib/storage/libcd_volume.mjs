@@ -44,7 +44,7 @@ export const LIBCD_VOLE_MASK= Object.freeze({
     activity: Object.freeze({
         missing: 0x01,
         present: 0x02,
-        busy: 0x03,       // 2 + 1 (present | missing)
+        busy: 0x1e,       // 2 + (4 | 8 | 16) -> present + (read | write | maintain) per vole_mask_structure.md
         read: 0x04,
         write: 0x08,
         maintain: 0x10
@@ -53,6 +53,15 @@ export const LIBCD_VOLE_MASK= Object.freeze({
         previous_readings: 0x01
     })
 })
+
+/**
+ * space-prefixed function: volume_is_busy
+ * returns true if volume is present and actively busy with read (4), write (8), or maintain (16) operations
+ */
+export function volume_is_busy(mask= 0) {
+    if ((mask & LIBCD_VOLE_MASK.activity.present) !== LIBCD_VOLE_MASK.activity.present) return false
+    return (mask & (LIBCD_VOLE_MASK.activity.read | LIBCD_VOLE_MASK.activity.write | LIBCD_VOLE_MASK.activity.maintain)) !== 0
+}
 
 export const LIBCD_VOL_SPECIES= Object.freeze({
     fixed: Object.freeze({ name: 'fixed', default_speed: LIBCD_VOLE_MASK.speed.no_restrictions }),
@@ -73,13 +82,13 @@ export const LIBCD_VOL_TYPE= Object.freeze({
 export const LIBCD_VOL_DISCOVER_STRATEGY= Object.freeze({
     sequential: Object.freeze({
         next: function(index, count, mask= 0) {
-            if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
+            if (volume_is_busy(mask)) return -1
             return (index + 1 < count) ? index + 1 : -1
         }
     }),
     staggered: Object.freeze({
         next: function(index, count, mask= 0, step= 4) {
-            if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
+            if (volume_is_busy(mask)) return -1
             var next_idx= index + step
             if (next_idx < count) return next_idx
             return (index + 1 < step && index + 1 < count) ? index + 1 : -1
@@ -87,7 +96,7 @@ export const LIBCD_VOL_DISCOVER_STRATEGY= Object.freeze({
     }),
     random_sample: Object.freeze({
         next: function(index, count, mask= 0) {
-            if ((mask & LIBCD_VOLE_MASK.activity.busy) === LIBCD_VOLE_MASK.activity.busy) return -1
+            if (volume_is_busy(mask)) return -1
             return Math.floor(Math.random() * count)
         }
     })
@@ -201,7 +210,7 @@ export async function volume_imprint(target, hardware_id, imprint_options= {}) {
     }
 
     return operation_run_pipeline(target, async function imprint_step() {
-        target.activity_mask= volume_add_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write)
+        target.activity_mask= volume_add_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write | LIBCD_VOLE_MASK.activity.maintain)
         try {
             // write ownership manifest to `\libcd\var\db` using the 32-bit magic imprint
             var manifest_payload= new Uint32Array([LIBCD_IMPRINT_MAGIC, hardware_id || 0x0])
@@ -209,7 +218,7 @@ export async function volume_imprint(target, hardware_id, imprint_options= {}) {
 
             await libcd_micro_pause.yield(target, 'imprint_write')
         } finally {
-            target.activity_mask= volume_clear_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write)
+            target.activity_mask= volume_clear_mask(target.activity_mask, LIBCD_VOLE_MASK.activity.write | LIBCD_VOLE_MASK.activity.maintain)
         }
     }, { max_retries: 3 })
 }

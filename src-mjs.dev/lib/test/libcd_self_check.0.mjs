@@ -184,6 +184,7 @@ import {
   volume_has_mask,
   volume_add_mask,
   volume_clear_mask,
+  volume_is_busy,
   volume_imprint
 } from "../storage/libcd_volume.mjs"
 
@@ -199,10 +200,11 @@ test("libcd_volume: behavioral Vole Masks, 32-bit safe math, and imprint operati
   mask = volume_clear_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive)
   assert.strictEqual(volume_has_mask(mask, LIBCD_VOLE_MASK.acl.must_io_exclusive), false)
 
-  // 2. Verify behavioral discovery strategies check activity busy mask
-  var busy_mask = LIBCD_VOLE_MASK.activity.busy
-  assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, busy_mask), -1, "Sequential skips discovery when volume is busy")
-  assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, 0), 1, "Sequential advances index when volume is idle")
+  // 2. Verify behavioral discovery strategies check activity busy mask and maintain flag
+  var busy_mask = LIBCD_VOLE_MASK.activity.present | LIBCD_VOLE_MASK.activity.maintain
+  assert.strictEqual(volume_is_busy(busy_mask), true, "Volume with present + maintain is busy")
+  assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, busy_mask), -1, "Sequential skips discovery when volume is busy with maintenance")
+  assert.strictEqual(LIBCD_VOL_DISCOVER_STRATEGY.sequential.next(0, 10, LIBCD_VOLE_MASK.activity.present), 1, "Sequential advances index when volume is idle present without maintenance")
 
   // 3. Verify libcd_Volume initialization and imprint operation (both class wrapper and functional primitive)
   var vol = new libcd_Volume({ type: "vm" })

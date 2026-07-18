@@ -1,5 +1,7 @@
 # lib-change-descent
 
+#### status: initial
+
 The first part of how lkman is going to work...  This probably exists elsewhere much better.
 
 ## PROJECT PHASES & ROADMAP
