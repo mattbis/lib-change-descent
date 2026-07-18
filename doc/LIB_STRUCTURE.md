@@ -52,3 +52,8 @@
 - you gotta read `doc/mjs_bitwise_quirks.md` before modifying bitwise flags or raw memory buffers... js coerces operands to 32-bit signed integers during bitwise math, which can silently overflow or mangle float pointers...
 - restrict bitwise math strictly to `Uint8Array` / `Int32Array` (`Atomics.or`, `Atomics.and`)... never apply bitwise operations to `Float64Array` (`mtime`, `size`) or 64-bit timestamps without BigInt arrays...
 
+## naming don't have a bunch of random functions
+
+- group functions by the topic ( ie usually the folder they live in ) - and the name of the file
+
+- prefer `robohash_thing_that()` this makes searching for a group much easier
