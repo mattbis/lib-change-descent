@@ -1,5 +1,9 @@
 # lib-change-descent
 
+## specialised library for disk stuff
+
+- not another activity monitor... it is designed for a specific asset and farm level
+
 #### status: initial
 
 Once teh main branch is something like a working thing, we will move to dev but main will and repo stuff will be reset to mean main is a cherry pick and dev is the trunk.
