@@ -17,11 +17,26 @@ import process from 'node:process'
 import { basename, extname } from 'node:path'
 
 // 2p
-import { WIN_FILTERS } from './win/libcd_filter.0.mjs'
-import { NIX_FILTERS } from './nix/libcd_filter.0.mjs'
-import { OSX_FILTERS } from './osx/libcd_filter.0.mjs'
 import { post } from '../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../internal/imut_log/libcd_imut_log_entry.mjs'
+
+export const WIN_FILTERS = Object.freeze({
+    path_prefixes: Object.freeze(['$Recycle.Bin', 'System Volume Information', 'Windows\\System32', 'Windows\\SysWOW64', 'Config.Msi']),
+    filenames: Object.freeze(['pagefile.sys', 'hiberfil.sys', 'swapfile.sys', 'DumpStack.log.tmp', '$MFT', '$LogFile', '$Volume', '$Bitmap', '$Boot', '$BadClus']),
+    extensions: Object.freeze(['.tmp', '.log', '.lock'])
+})
+
+export const NIX_FILTERS = Object.freeze({
+    path_prefixes: Object.freeze(['/proc', '/sys', '/dev', '/run', '/tmp', 'lost+found', '/var/run', '/var/lock']),
+    filenames: Object.freeze(['.bash_history', '.node_repl_history', '.lesshst']),
+    extensions: Object.freeze(['.tmp', '.log', '.pid', '.lock'])
+})
+
+export const OSX_FILTERS = Object.freeze({
+    path_prefixes: Object.freeze(['.Spotlight-V100', '.Trashes', '.fseventsd', '.TemporaryItems', '/.MobileBackups', '/dev', '/proc', '/sys']),
+    filenames: Object.freeze(['.DS_Store', '.VolumeIcon.icns', '._.DS_Store']),
+    extensions: Object.freeze(['.tmp', '.log', '.lock'])
+})
 
 export const FILTER_PRECEDENCE = Object.freeze({
     LIB_DEFAULT: 0,

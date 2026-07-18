@@ -2,7 +2,7 @@ import test from "node:test"
 import assert from "node:assert"
 import { invariant } from "../libcd_invariant.mjs"
 import { run_self_check, run_pre_op_check } from "../internal/self_check/libcd_self_check.mjs"
-import { node_create_accessor, NODE_STRIDE } from "../node/libcd_struct_offset_manager.0.mjs"
+import { node_create_accessor, NODE_STRIDE } from "../node/libcd_node.mjs"
 
 // 0. check db & storage primitives self-check orchestration
 test("libcd_self_check: pre_op_check and run_self_check orchestration", () => {
@@ -241,7 +241,7 @@ import {
   hardware_controller_unmount_volume,
   hardware_controller_get_active_volumes,
   hardware_controller_get_known_ids
-} from "../hardware/libcd_controller.mjs"
+} from "../hardware/libcd_hardware.mjs"
 
 test("libcd_volume & lib/hardware: active/known unique volume registries and hardware controller orchestration", async () => {
   volume_clear_registries()
@@ -444,7 +444,7 @@ test("libcd_change_graph & libcd_ctx: lifecycle context buffer pools, entropy ac
   assert.strictEqual(graph.emit_bitmap(2, 2).length, 4, "Class wrapper emits quantized bitmap")
 })
 
-import { assert_disk_vol_id, assert_polling_disk_vol_ids } from "../internal/self_check/libcd_assert_vol_id.mjs"
+import { assert_disk_vol_id, assert_polling_disk_vol_ids } from "../internal/self_check/libcd_self_check.mjs"
 
 test("libcd_assert_vol_id: verifies removable and added_by_default volumes maintain valid imprints before access", async () => {
   // 1. Stable fixed drive without removable flag should pass assert_disk_vol_id without imprint
@@ -465,8 +465,7 @@ test("libcd_assert_vol_id: verifies removable and added_by_default volumes maint
   assert.strictEqual(assert_polling_disk_vol_ids(), true, "Polling across active imprinted volumes passes cleanly")
 })
 
-import { win_is_administrator } from "../os/win/libcd_administrator.mjs"
-import { win_get_node_process_path, win_get_isolation_status } from "../os/win/libcd_win_isolate.mjs"
+import { win_is_administrator, win_get_node_process_path, win_get_isolation_status } from "../os/win/libcd_win.mjs"
 
 test("libcd_win_isolate & libcd_administrator: Windows process identification, admin check, and WFP firewall isolation status", () => {
   if (process.platform !== "win32") {

@@ -106,3 +106,39 @@ export function host_metric(options= {}) {
 
     return snapshot
 }
+
+// ---- Timing Utilities (`timed`, `timed_async`) ----
+
+const fn_name = (fn) => fn.name || '(anonymous)'
+
+const report = (name, ns) => {
+    const ms = Number(ns) / 1e6
+    console.log(`[TIMED] ${name} took ${ms.toFixed(3)}ms`)
+}
+
+/**
+ * Time a synchronous function.
+ * @template T
+ * @param {() => T} fn
+ * @returns {T}
+ */
+export function timed(fn) {
+    const start = process.hrtime.bigint()
+    const result = fn()
+    report(fn_name(fn), process.hrtime.bigint() - start)
+    return result
+}
+
+/**
+ * Time an async function.
+ * @template T
+ * @param {() => Promise<T>} fn
+ * @returns {Promise<T>}
+ */
+export async function timed_async(fn) {
+    const start = process.hrtime.bigint()
+    const result = await fn()
+    report(fn_name(fn), process.hrtime.bigint() - start)
+    return result
+}
+

@@ -17,7 +17,7 @@ import {
     win_get_isolation_status,
     win_add_firewall_rules,
     win_remove_firewall_rules
-} from '../../src-mjs.dev/lib/os/win/libcd_win_isolate.mjs'
+} from '../../src-mjs.dev/lib/os/win/libcd_win.mjs'
 
 var cli= arg_parse_cli(process.argv.slice(2))
 var opts= cli.options || {}
