@@ -49,6 +49,8 @@ a profile can set this value automatically and the default config file init has 
 
 `the mask is a time binary value` or a JS date object... 
 
+1. the value as bits
+
 ## TODO
 
 - the vol strategies are almost hte same thing... this makes me think to redesign as behavioural more.. since the operations are similar
