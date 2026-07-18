@@ -33,8 +33,21 @@
 
 # history mask
 
--- indicates readings from previous operations... TODO (matt): when more coupled to the os... 
+1. volatile
+2. storing
 
+# time mask 
+
+- for each context you can create a mask that determines how long something lives for - by default the storage is small but it will grow...
+a connected app will be reminded of this when you query flags()
+
+its also in the logs
+
+a profile can set this value automatically and the default config file init has it set to 3 years...
+
+- maintenance is enabled by default periodically which compacts this data, using the inbuilt compression functions
+
+`the mask is a time binary value` or a JS date object... 
 
 ## TODO
 
