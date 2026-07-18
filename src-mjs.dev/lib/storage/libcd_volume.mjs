@@ -121,6 +121,13 @@ export function volume_has_known_id(hardware_id) {
 }
 
 /**
+ * get metadata for a specific known volume id
+ */
+export function volume_get_known_metadata(hardware_id) {
+    return _known_volume_ids.get(hardware_id) || null
+}
+
+/**
  * get all known possible unique volume ids (`uuid`s / hardware IDs) and their metadata
  */
 export function volume_get_known_ids() {
@@ -183,6 +190,7 @@ export function volume_clear_mask(current_mask, target_mask) {
  * registers hardware_id into known and active sets
  */
 export async function volume_imprint(target, hardware_id, imprint_options= {}) {
+    if (target) target.imprinted = true
     if (hardware_id) {
         volume_add_known_id(hardware_id, { type: target.type, species: target.species, imprinted: true })
         volume_add_active(target, hardware_id)
@@ -214,6 +222,10 @@ export class libcd_Volume {
         var identifiers= arg_get_opt(opts, 'identifiers', null) || []
         this.hardware_id= arg_get_opt(opts, 'hardware_id', null) || identifiers[0] || null
         
+        this.removable = arg_get_opt(opts, 'removable', this.species === 'removable' || this.species === 'volatile') || false
+        this.added_by_default = arg_get_opt(opts, 'added_by_default', false) || false
+        this.imprinted = arg_get_opt(opts, 'imprinted', false) || false
+
         // initialize behavioral vole masks
         this.acl_mask= LIBCD_VOLE_MASK.acl.probe_name_records | LIBCD_VOLE_MASK.acl.descend_root | LIBCD_VOLE_MASK.acl.descend_children
         if (LIBCD_VOL_TYPE[this.type]?.io_exclusive) {
@@ -232,7 +244,13 @@ export class libcd_Volume {
         }
 
         if (this.hardware_id) {
-            volume_add_known_id(this.hardware_id, { type: this.type, species: this.species })
+            volume_add_known_id(this.hardware_id, {
+                type: this.type,
+                species: this.species,
+                removable: this.removable,
+                added_by_default: this.added_by_default,
+                imprinted: this.imprinted
+            })
             volume_add_active(this, this.hardware_id)
         }
     }

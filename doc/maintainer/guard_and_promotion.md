@@ -90,3 +90,24 @@ All maintainer shell scripts and batch utilities reside inside **`local/sh/`**:
 - `local/sh/dir_to_vfs.sh` — POSIX shell equivalent.
 
 These local utility scripts are designed to invoke `libcd_guard.mjs --pin <PIN>` before performing irreversible operations across volumes or main release structures.
+
+---
+
+## 5. Node.js Boot-Time Lockdown (`gen_lockdown_nodejs.mjs`)
+
+While the library preserves **`var`** statements across local execution functions for maximum mechanical sympathy (`DESIGN_MOMENTUM.md`), protecting long-running resident processes from **prototype pollution (`__proto__` injection)** across 21 storage volumes requires locking down built-in JavaScript objects (`Object.prototype`, `Array.prototype`, `Function.prototype`).
+
+Rather than wrapping every individual function scope with `Object.freeze()`, we provide a local tooling generator that configures Node.js engine-level boot-time locking (`--frozen-intrinsics`):
+
+```powershell
+node local/tool/gen_lockdown_nodejs.mjs --target windows --out local/sh/run_resident.cmd
+```
+
+This generates a native boot wrapper:
+```bat
+@echo off
+set NODE_OPTIONS=--frozen-intrinsics --no-warnings
+node "src-mjs.main/libcd_main.mjs" %*
+```
+
+When started via `--frozen-intrinsics`, V8 recursively freezes all built-in intrinsics right at boot time (`1p` zero-dependency engine guarantee), ensuring any attempt by malformed USN records or IPC payloads to pollute global prototypes throws a `TypeError` immediately while keeping hot loops optimized with `var`.

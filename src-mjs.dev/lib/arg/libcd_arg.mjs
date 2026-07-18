@@ -81,7 +81,13 @@ export function arg_parse_cli(args= []) {
                 var val= arg.slice(eq_idx + 1)
                 options[key]= val
             } else {
-                options[arg.slice(2)]= true
+                var key= arg.slice(2)
+                if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    options[key]= args[i + 1]
+                    i= i + 1
+                } else {
+                    options[key]= true
+                }
             }
         } else if (arg.startsWith("-") && arg.length > 1) {
             options[arg.slice(1)]= true

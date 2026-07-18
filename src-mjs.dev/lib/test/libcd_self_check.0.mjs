@@ -397,6 +397,27 @@ test("libcd_change_graph & libcd_ctx: lifecycle context buffer pools, entropy ac
   assert.strictEqual(graph.emit_bitmap(2, 2).length, 4, "Class wrapper emits quantized bitmap")
 })
 
+import { assert_disk_vol_id, assert_polling_disk_vol_ids } from "../internal/self_check/libcd_assert_vol_id.mjs"
+
+test("libcd_assert_vol_id: verifies removable and added_by_default volumes maintain valid imprints before access", async () => {
+  // 1. Stable fixed drive without removable flag should pass assert_disk_vol_id without imprint
+  var fixed_vol = new libcd_Volume({ type: "ssd", hardware_id: "vol_fixed_01" })
+  assert.strictEqual(assert_disk_vol_id(fixed_vol), true, "Fixed volume passes vol id assertion")
+
+  // 2. Removable volume without imprint must throw invariant error
+  var usb_vol = new libcd_Volume({ type: "ram", species: "removable", hardware_id: "vol_usb_01", removable: true })
+  assert.throws(() => {
+    assert_disk_vol_id(usb_vol)
+  }, /must be imprinted before access/, "Unimprinted removable volume throws invariant violation")
+
+  // 3. Imprint the removable volume and verify it passes assertion
+  await volume_imprint(usb_vol, "vol_usb_01")
+  assert.strictEqual(assert_disk_vol_id(usb_vol), true, "Imprinted removable volume passes vol id assertion")
+
+  // 4. Verify polling across active volumes
+  assert.strictEqual(assert_polling_disk_vol_ids(), true, "Polling across active imprinted volumes passes cleanly")
+})
+
 
 
 
