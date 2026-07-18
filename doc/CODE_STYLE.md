@@ -9,6 +9,7 @@
 - make the significant part of a declaration the important part in spacing semantics:-
   - prefer `var x= true`
   - prefer `function foo(a= )`
+  - when you see `===` its more significant since assignment is =all teh same
 - prefer tertiary ( in this formatting ) when the valueExpression is complicated enough to warrant it, if not it can be a one liner if simple enough ... the indent of the tertiary `?` `:` are the important aspect, for readability and so far as i know this has no performance aspect... :-
 
 ```
