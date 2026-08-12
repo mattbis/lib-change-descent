@@ -23,7 +23,7 @@ import { volume_get_known_ids, volume_get_active_volumes } from '../storage/libc
 import { post } from '../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../internal/imut_log/libcd_imut_log_entry.mjs'
 
-var _os_metadata_registry = {
+var _os_metadata_registry= {
     known_hosts: new Map(),
     volume_access_history: new Map()
 }
