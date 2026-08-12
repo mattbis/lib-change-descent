@@ -23,25 +23,25 @@ import { OSX_FILTERS } from './osx/libcd_filter.0.mjs'
 import { post } from '../internal/imut_log/libcd_imut_log.mjs'
 import { make_entry } from '../internal/imut_log/libcd_imut_log_entry.mjs'
 
-export const FILTER_PRECEDENCE = Object.freeze({
+export const FILTER_PRECEDENCE= Object.freeze({
     LIB_DEFAULT: 0,
     ETC_DEFAULT: 1,
     APP_DYNAMIC: 2
 })
 
-var _filter_layers = [
+var _filter_layers= [
     { path_prefixes: new Set(), filenames: new Set(), extensions: new Set() },
     { path_prefixes: new Set(), filenames: new Set(), extensions: new Set() },
     { path_prefixes: new Set(), filenames: new Set(), extensions: new Set() }
 ]
 
-var _skip_metrics = {
+var _skip_metrics= {
     total_skipped: 0,
     by_precedence: { 0: 0, 1: 0, 2: 0 },
     by_type: { path_prefixes: 0, filenames: 0, extensions: 0 }
 }
 
-var _initialized = false
+var _initialized= false
 
 /**
  * initializes Layer 0 (`LIB_DEFAULT`) based on `process.platform`.
