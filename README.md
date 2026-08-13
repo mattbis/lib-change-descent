@@ -6,8 +6,10 @@
 
 #### status: initial
 
-Once teh main branch is something like a working thing, we will move to dev but main will and repo stuff will be reset to mean main is a cherry pick and dev is the trunk.
-Testing will the same as the initial main. It will then get some of the more experimental and extraneous stuff.. but mostly it will be feedback from running it myself with important patches merged strait into main. Once that is completed.. dev will be refocused on reaching phase 1 and 2. Then testing will take on a security standpoint, once that is done, main is updated in bulk more. And then I either move on or its basically there... since to continue I need to use in other projects, to get a good idea how it needs to work moving forwards.
+todo ( if ever get to sit a computer again )
+
+- collate where soup ignored me consolidate
+- python bindings 
 
 Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
