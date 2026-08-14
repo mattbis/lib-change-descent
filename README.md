@@ -17,6 +17,8 @@ todo ( if ever get to sit a computer again )
 - done module scope should be session, misunderstanding 
 - abrupt termination worries me
 - smaller size 
+- guard appears to ignore how it's protected and signing key for release code is too big...
+- execute operations is the deconstruction but the code needs to be written compatible 
 
 Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
