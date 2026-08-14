@@ -22,6 +22,7 @@ todo ( if ever get to sit a computer again )
 - invariant is misunderstood but rescue as part of op wrapper when +safe
 - one k constant in sparse float domain is questionable as it makes assumptions on disk contents what have we thhs value so close... and can we magnitude scale those ... 
 - when a full scan is needed 
+- op recovery is not how I saw it since db and session and ctx is confused ... it has to always work but have exhausive operands 
 
 - Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
