@@ -11,6 +11,7 @@ todo ( if ever get to sit a computer again )
 - collate where soup ignored me consolidate
 - python bindings 
 - I dont like uuid for hyphens, change all this to a new static dep ulid ..  factor this into optimisation 
+- bundle order 
 
 Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
