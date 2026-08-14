@@ -23,6 +23,9 @@ todo ( if ever get to sit a computer again )
 - one k constant in sparse float domain is questionable as it makes assumptions on disk contents what have we thhs value so close... and can we magnitude scale those ... 
 - when a full scan is needed 
 - op recovery is not how I saw it since db and session and ctx is confused ... it has to always work but have exhausive operands 
+- too brittle ... no when. to rest and resume and cope with some asserts clashing ...
+
+with this in mind it's already too big ... we need to work on a fork branch where I define how all process happens 
 
 - Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
