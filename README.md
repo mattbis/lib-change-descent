@@ -12,6 +12,11 @@ todo ( if ever get to sit a computer again )
 - python bindings 
 - I dont like uuid for hyphens, change all this to a new static dep ulid ..  factor this into optimisation 
 - bundle order 
+- a core tenet was ignored in how tree is structured with nodes, they can be data or a different value system
+- too many long soup snake case named, functions lack of local 
+- done module scope should be session, misunderstanding 
+- abrupt termination worries me
+- smaller size 
 
 Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
