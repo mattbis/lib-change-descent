@@ -19,6 +19,7 @@ todo ( if ever get to sit a computer again )
 - smaller size 
 - guard appears to ignore how it's protected and signing key for release code is too big...
 - execute operations is the deconstruction but the code needs to be written compatible 
+- invariant is misunderstood but rescue as part of op wrapper when +safe
 
 Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
 
