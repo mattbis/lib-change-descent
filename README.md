@@ -24,6 +24,8 @@ todo ( if ever get to sit a computer again )
 - when a full scan is needed 
 - op recovery is not how I saw it since db and session and ctx is confused ... it has to always work but have exhausive operands 
 - too brittle ... no when. to rest and resume and cope with some asserts clashing ...
+- pq controls new concept that eventually aborts ops and pushes to a when seen again queue... after sometime undecided.... so these ops can be dropped because a live descent and opt parse disk node tree when back... however the slow down needs communication.
+- when coupled these are bytes that a client knows but isn't transmitted... 
 
 with this in mind it's already too big ... we need to work on a fork branch where I define how all process happens 
 
