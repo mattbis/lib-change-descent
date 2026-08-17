@@ -8,6 +8,7 @@
 
 todo ( if ever get to sit a computer again )
 
+- wmic is being removed ... api long lasting version required
 - collate where soup ignored me consolidate
 - python bindings 
 - I dont like uuid for hyphens, change all this to a new static dep ulid ..  factor this into optimisation 
