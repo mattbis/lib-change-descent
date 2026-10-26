@@ -14,23 +14,23 @@ todo ( if ever get to sit a computer again )
 - I dont like uuid for hyphens, change all this to a new static dep ulid ..  factor this into optimisation 
 - bundle order.
 - a core tenet was ignored in how tree is structured with nodes, they can be data or a different value system
-- too many long soup snake case named, functions lack of local 
-- done module scope should be session, misunderstanding 
+- too many long soup snake case named, functions lack of local.
+- done module scope should be session, misunderstanding.
 - abrupt termination worries me
 - smaller size.
 - guard appears to ignore how it's protected and signing key for release code is too big...
-- execute operations is the deconstruction but the code needs to be written compatible 
-- invariant is misunderstood but rescue as part of op wrapper when +safe
-- one k constant in sparse float domain is questionable as it makes assumptions on disk contents what have we thhs value so close... and can we magnitude scale those ... 
-- when a full scan is needed 
-- op recovery is not how I saw it since db and session and ctx is confused ... it has to always work but have exhausive operands 
+- execute operations is the deconstruction but the code needs to be written compatible.
+- invariant is misunderstood but rescue as part of op wrapper when +safe.
+- one k constant in sparse float domain is questionable as it makes assumptions on disk contents what have we thhs value so close... and can we magnitude scale those.
+- when a full scan is needed.
+- op recovery is not how I saw it since db and session and ctx is confused ... it has to always work but have exhausive operands.
 - too brittle ... no when. to rest and resume and cope with some asserts clashing ...
 - pq ( statefil volatile queue) controls new concept that eventually aborts ops and pushes to a when seen again queue... after sometime undecided.... so these ops can be dropped because a live descent and opt parse disk node tree when back... however the slow down needs communication.
-- when coupled these are bytes that a client knows but isn't transmitted... 
+- when coupled these are bytes that a client knows but isn't transmitted.
 
-with this in mind it's already too big ... we need to work on a fork branch where I define how all process happens 
+with this in mind it's already too big ... we need to work on a fork branch where I define how all process happens.
 
-- Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
+- Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate.
 
 - TODO (matt): hooks infrastructure - and locks on main ( even me ) && can't commit to a `src-*.[channel]` without being on the correct branch
 
