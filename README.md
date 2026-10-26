@@ -4,12 +4,22 @@
 
 - not another activity monitor... it is designed for a specific asset and farm level
 
-#### status: initial
+### status: initial
 
 Once teh main branch is something like a working thing, we will move to dev but main will and repo stuff will be reset to mean main is a cherry pick and dev is the trunk.
 Testing will the same as the initial main. It will then get some of the more experimental and extraneous stuff.. but mostly it will be feedback from running it myself with important patches merged strait into main. Once that is completed.. dev will be refocused on reaching phase 1 and 2. Then testing will take on a security standpoint, once that is done, main is updated in bulk more. And then I either move on or its basically there... since to continue I need to use in other projects, to get a good idea how it needs to work moving forwards.
 
-Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
+**Activity Status & `maintain` Operational Bit (`0x10`) & `busy` Mask (`0x1e`):**
+Per `doc/vole_mask_structure.md`, our `activity` vole mask (`LIBCD_VOLE_MASK.activity`) separates explicit user operations from background library tasks:
+
+- `busy` (`0x1e` = `present (0x02) | read (0x04) | write (0x08) | maintain (0x10)`): Indicates any active lock on a volume or context.
+- `maintain` (`0x10`): Explicitly indicates an operation initiated automatically by the library rather than an immediate user command. Currently actively used when:
+  1. **Imprinting & Verification**: `libcd_assert_vol_id.mjs` and `volume_imprint_vol` set `maintain` while writing or checking `LIBCD_IMPRINT_MAGIC` on removable/default volumes.
+  2. **Time Mask Maintenance**: Background periodic compaction (`time_mask` compaction of historical readings and logs).
+  3. **Gate & Pathway Verification**: Cryptographic pathway checking (`--lockdown --gate` or hash verification).
+Any behavioral discovery strategy or context check respects `volume_is_busy(mask)`, which checks whether `(mask & (read | write | maintain)) !== 0`.
+
+Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate...
 
 - TODO (matt): hooks infrastructure - and locks on main ( even me ) && can't commit to a `src-*.[channel]` without being on the correct branch
 
@@ -18,25 +28,33 @@ The first part of how lkman is going to work...  This probably exists elsewhere 
 ## PROJECT PHASES & ROADMAP
 
 ### Phase 1: Pure JS Core (`src-mjs.dev`) & Zero-GC Foundation
+
 **Goal:** Complete the native Node.js (`1p/2p`) shared memory pool and verify zero-allocation assumptions.
+
 - [x] Shared Memory Accessors (`node_buffer` & `string_heap`)
 - [x] `libcd_self_check.0.mjs` & Integrity Verification
 - [ ] Cache-Line Padding for Control Buffers (prevent false sharing)
 
 ### Phase 2: Decent Descent Float Hash Engine
+
 **Goal:** Implement the mathematical float hashing engine across all volume species (`Fixed`, `Volatile`, `Virtual`).
+
 - [x] Node & Directory Fractional Hashing ($K_1 \dots K_4$ scale in $[0,1)$ domain)
 - [x] Volume Species Adaptation (Behavioral Vole Masks & incremental hash bubbling)
 - [x] Operation Lifecycle micro-pause yields and try/catch retry boundaries
 
 ### Phase 3: Native Zig Subprocess Integration (`src-zig.dev`)
+
 **Goal:** Achieve maximum mechanical sympathy via native OS kernels for near-zero CPU overhead change monitoring.
+
 - [ ] Windows NTFS USN Journal Reader (`libcd-journal.exe`)
 - [ ] Linux VFS Stream & `fanotify` Hook
 - [ ] Stream Consumer (`libcd_os_journal.mjs`) & Unprivileged Fallbacks
 
 ### Phase 4: Dual Surface Polish & Production Verification
+
 **Goal:** Lock in tree-shaking, publish forensic logging, and benchmark against industry standards.
+
 - [ ] Tree-Shaking Verification (Dual Surface API class extraction)
 - [ ] Comprehensive Benchmarking & Stress Testing vs Chokidar
 
@@ -45,16 +63,17 @@ The first part of how lkman is going to work...  This probably exists elsewhere 
 As `lib-change-descent` scales across operating systems and execution targets, we recognize that **security and mechanical sympathy should not fight for the hot path**. Because our dependencies are strictly static (`1p/2p` discipline, zero `node_modules` bloat), **there are no supply chain attacks to defend against**. Furthermore, assuming the runtime environment and operator are secure and savvy, we do not need to encumber hot execution loops with heavy runtime security layers or multi-layered function call contexts.
 
 Instead, the roadmap moves toward **Dynamic Function Composition (`The String Trick with Context`)**, detailed in **[doc/composable_architecture.md](doc/composable_architecture.md)**:
+
 1. **Core Execution Primitives (`src-mjs.dev`):** Unboxed, zero-GC, monomorphic functional blocks whose sole responsibility is high-throughput descent hashing and volume traversal at C-like speeds.
 2. **Dynamic Pipeline Compilation (`new Function('ctx', ...)`):** Rather than chaining dozens of intermediate function calls (`pipeline(step1(step2(ctx)))`), operation steps and memory offsets are dynamically assembled into a single C-like flattened function string and JIT-compiled once at startup.
 3. **Layered Security via Build Modifiers (`var/build` & Wrappers):** When crossing untrusted boundaries, packaging for public distribution, or isolating resident processes, higher-order **Build Modifiers** dynamically compose security layers around the core constructs (`e.g., injecting global esbuild freeze banners, wrapping execution inside WFP ring-0 network isolation, or enforcing boundary object sealing`).
-
 
 ## STRING HEAP MITIGATION
 
 **The Bottleneck:** Relying on `TextDecoder` to continuously convert `Uint8Array` string heaps back into native JavaScript strings for path comparisons will destroy our mechanical sympathy by triggering massive Garbage Collection (GC) pauses and CPU overhead.
 
-**The Mitigation:** 
+**The Mitigation:**
+
 1. **Binary-First Processing:** Path comparisons and hashing (e.g., using BLAKE3) must be executed *directly* on the raw binary `Uint8Array` slices.
 2. **Decode at the Edge:** We strictly reserve `TextDecoder` (and the instantiation of JS String objects) for the absolute edge of the application—only when rendering output to the UI or logging for humans.
 
@@ -75,7 +94,6 @@ Since reading the native OS journal (e.g., Windows NTFS USN or Linux `fanotify`)
 ## COMPOSED OPERATIONS & MICRO-PAUSES
 
 To ensure the library executes the absolute minimum unique code per operation (`thisArg` context passing) while remaining resilient under heavy I/O, operations are designed as composed pipelines:
+
 1. **Operation-Controlled Execution & Retries:** Every operation (and sub-operation) executes inside `try { ... } catch (err)` blocks where transient filesystem locks, volume delays, or resource contention automatically invoke `retry(ctx, err, attempt)`. We strictly avoid throwing uncatchable `invariant()` errors inside operation pipelines so retry logic can attempt recovery.
 2. **Micro-Pauses (`libcd_micro_pause`):** Because complex operations are composed of smaller sub-operations (`thisArg` pipelines), step boundaries and retry backoff loops yield execution via micro-pauses. Profile modifiers (`+bg`: 10ms yield, `+fg`: 1ms yield, `-nolimits`: 0ms zero-pause) dynamically control yield durations, allowing the V8 event loop and host application to breathe without duplicating operational flow or stalling concurrent tasks.
-
-

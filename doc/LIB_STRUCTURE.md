@@ -1,3 +1,30 @@
+# library structure
+
+```text
+lib-change-descent/
+├── libcd_surface_class.mjs            # Primary JS entry point (Facade)
+├── libcd_engine.mjs                     # Core Pipeline Orchestrator (JS)
+├── libcd_interface.mjs                  # Abstract Interface Definition (JS)
+├── src-mjs.dev/                         # Active Development (MJS)
+│   ├── libcd_context.mjs                # Context & Pipeline Management
+│   ├── libcd_operation.mjs              # Operation Definition & Registry
+│   └── ...                              # Development Modules
+├── src-zig.dev/                         # Active Development (Zig)
+│   └── ...                              # Zig Modules
+├── src-mjs.main/                        # Production (MJS)
+├── src-zig.main/                        # Production (Zig)
+├── src-mjs.testing/                     # Testing (MJS)
+├── src-zig.testing/                     # Testing (Zig)
+├── doc/
+│   ├── LIB_STRUCTURE.md                 # Library Structure & Architecture
+│   ├── CODE_STYLE.md                    # Coding Standards
+│   ├── mjs_bitwise_quirks.md            # JavaScript Bitwise Quirks
+│   └── os_journal.md                    # OS Journaling (USN/Fanotify)
+├── 3p/                                  # Third-Party Libraries
+├── bin/                                 # Executable Binaries
+└── package.json
+```
+
 ## project channels (.dev / .main / .testing)
 
 - in this project we strictly organize source code and verification harnesses into dedicated channels...

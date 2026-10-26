@@ -102,7 +102,9 @@ export function session_init_for_context(ctx, options= {}) {
     if (!ctx.buffers) ctx.buffers= Object.create(null)
     ctx.buffers.session_header= buf
 
+    var session_id= opts.session_id || 'default'
     var session_state= {
+        session_id: session_id,
         active: true,
         restored: restored,
         header: buf,
@@ -111,6 +113,8 @@ export function session_init_for_context(ctx, options= {}) {
         last_checkpoint_ts: meta.timestamp,
         checkpoints: []
     }
+    if (!ctx.sessions) ctx.sessions= new Map()
+    ctx.sessions.set(session_id, session_state)
     ctx.session= session_state
     return session_state
 }

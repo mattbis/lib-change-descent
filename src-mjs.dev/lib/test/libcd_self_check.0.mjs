@@ -287,6 +287,8 @@ test("libcd_arg: fast/secure slice comparators, binary header parsing, and dual 
 
   var opp_prof = arg_parse_profile("-bg -start +resident")
   assert.strictEqual(opp_prof.bg, false, "Opposite -bg sets bg false")
+  assert.strictEqual(opp_prof.fg, true, "Opposite -bg sets fg true")
+  assert.strictEqual(arg_parse_profile("-fg").bg, true, "Opposite -fg sets bg true")
   assert.strictEqual(opp_prof.start, false, "Opposite -start sets start false")
   assert.strictEqual(opp_prof.resident, true, "+resident sets resident true")
   assert.strictEqual(opp_prof.yield_ms, 1, "-bg opposite profile selects 1ms yield")
@@ -323,6 +325,7 @@ test("libcd_arg: fast/secure slice comparators, binary header parsing, and dual 
   assert.strictEqual(parsed_func.options.resident, true)
   assert.strictEqual(parsed_func.options["-bg"], true)
   assert.strictEqual(parsed_func.options.bg, false, "-bg flag sets boolean options.bg to false")
+  assert.strictEqual(parsed_func.options.fg, true, "-bg flag sets boolean options.fg to true")
   assert.strictEqual(parsed_func.options["-start"], true)
   assert.strictEqual(parsed_func.options.start, false, "-start flag sets boolean options.start to false")
   assert.deepStrictEqual(parsed_func.profiles, ["+resident", "-bg", "-start"])

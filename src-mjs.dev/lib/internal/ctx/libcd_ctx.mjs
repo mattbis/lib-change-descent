@@ -50,6 +50,7 @@ export function ctx_create(options= {}) {
         
         // null-prototype registry for mounted volume instances and worker references
         volumes: new Map(),
+        sessions: new Map(),
         
         // shared raw memory views and buffer pools (`control_buffer`, `change_graph_buffer`)
         buffers: Object.assign(Object.create(null), {

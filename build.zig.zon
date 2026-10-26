@@ -1,0 +1,12 @@
+.{
+    .name = .lib_change_descent,
+    .version = "0.0.1",
+    .fingerprint = 0x471e8b5370159f6,
+    .paths = .{
+        "src-zig.dev",
+        "src-zig.main",
+        "src-zig.testing",
+        "build.zig",
+        "build.zig.zon",
+    },
+}

@@ -116,17 +116,37 @@ export function arg_parse_profile(profile_arg= '+bg', options= {}) {
 
     var time_mask= arg_get_opt(options, 'time_mask', arg_get_opt(parsed_opts, 'time_mask', 0x10)) || 0x10
 
-    // Resolve profile modifier states and opposites (`-bg opposite -> bg false; -fg opposite -> fg false; -start opposite -> start false`)
-    var bg= arg_get_opt(parsed_opts, 'bg', true)
-    if (parsed_opts['-bg'] === true) bg= false
-    else if (parsed_opts['+bg'] === true || profile_str.includes('+bg')) bg= true
+    // Resolve profile modifier states and opposites (`-bg opposite -> bg false, fg true; -fg opposite -> fg false, bg true`)
+    var bg= arg_get_opt(parsed_opts, 'bg', null)
+    var fg= arg_get_opt(parsed_opts, 'fg', null)
 
-    var fg= arg_get_opt(parsed_opts, 'fg', false)
-    if (parsed_opts['-fg'] === true) fg= false
-    else if (parsed_opts['+fg'] === true || profile_str.includes('+fg')) fg= true
+    if (parsed_opts['-bg'] === true || profile_str.includes('-bg')) {
+        bg= false
+        if (fg === null) fg= true
+    } else if (parsed_opts['+bg'] === true || profile_str.includes('+bg')) {
+        bg= true
+        if (fg === null) fg= false
+    }
+
+    if (parsed_opts['-fg'] === true || profile_str.includes('-fg')) {
+        fg= false
+        if (bg === null) bg= true
+    } else if (parsed_opts['+fg'] === true || profile_str.includes('+fg')) {
+        fg= true
+        if (bg === null) bg= false
+    }
+
+    if (bg === null && fg === null) {
+        bg= true
+        fg= false
+    } else if (bg === null) {
+        bg= !fg
+    } else if (fg === null) {
+        fg= !bg
+    }
 
     var resident= arg_get_opt(parsed_opts, 'resident', false)
-    if (parsed_opts['-resident'] === true) resident= false
+    if (parsed_opts['-resident'] === true || profile_str.includes('-resident')) resident= false
     else if (parsed_opts['+resident'] === true || profile_str.includes('+resident')) resident= true
 
     var start= arg_get_opt(parsed_opts, 'start', null)
@@ -207,12 +227,16 @@ export function arg_parse_cli(args= []) {
             var key= arg.slice(1)
             options[arg]= true
             options[key]= true
+            if (key === 'bg') options.fg= false
+            if (key === 'fg') options.bg= false
             profiles.push(arg)
         } else if (arg.startsWith("-") && arg.length > 1 && !arg.startsWith("--")) {
             var key= arg.slice(1)
-            if (key === 'bg' || key === 'fg' || key === 'start' || key === 'resident' || key === 'nolimits' || key.startsWith('profile')) {
+            if (key === 'bg' || key === 'fg' || key === 'start' || key === 'session' || key === 'resident' || key === 'nolimits' || key.startsWith('profile')) {
                 options[arg]= true
                 options[key]= false
+                if (key === 'bg') options.fg= true
+                if (key === 'fg') options.bg= true
                 profiles.push(arg)
             } else {
                 options[key]= true
