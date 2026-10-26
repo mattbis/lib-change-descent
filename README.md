@@ -6,8 +6,35 @@
 
 ### status: initial
 
-Once teh main branch is something like a working thing, we will move to dev but main will and repo stuff will be reset to mean main is a cherry pick and dev is the trunk.
-Testing will the same as the initial main. It will then get some of the more experimental and extraneous stuff.. but mostly it will be feedback from running it myself with important patches merged strait into main. Once that is completed.. dev will be refocused on reaching phase 1 and 2. Then testing will take on a security standpoint, once that is done, main is updated in bulk more. And then I either move on or its basically there... since to continue I need to use in other projects, to get a good idea how it needs to work moving forwards.
+todo ( if ever get to sit a computer again )
+
+- wmic is being removed ... api long lasting version required - some stuff is from stat... however controller awareness 
+- collate where soup ignored me consolidate
+- python bindings.
+- I dont like uuid for hyphens, change all this to a new static dep ulid ..  factor this into optimisation 
+- bundle order.
+- a core tenet was ignored in how tree is structured with nodes, they can be data or a different value system
+- too many long soup snake case named, functions lack of local 
+- done module scope should be session, misunderstanding 
+- abrupt termination worries me
+- smaller size.
+- guard appears to ignore how it's protected and signing key for release code is too big...
+- execute operations is the deconstruction but the code needs to be written compatible 
+- invariant is misunderstood but rescue as part of op wrapper when +safe
+- one k constant in sparse float domain is questionable as it makes assumptions on disk contents what have we thhs value so close... and can we magnitude scale those ... 
+- when a full scan is needed 
+- op recovery is not how I saw it since db and session and ctx is confused ... it has to always work but have exhausive operands 
+- too brittle ... no when. to rest and resume and cope with some asserts clashing ...
+- pq ( statefil volatile queue) controls new concept that eventually aborts ops and pushes to a when seen again queue... after sometime undecided.... so these ops can be dropped because a live descent and opt parse disk node tree when back... however the slow down needs communication.
+- when coupled these are bytes that a client knows but isn't transmitted... 
+
+with this in mind it's already too big ... we need to work on a fork branch where I define how all process happens 
+
+- Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate... 
+
+- TODO (matt): hooks infrastructure - and locks on main ( even me ) && can't commit to a `src-*.[channel]` without being on the correct branch
+
+The first part of how lkman is going to work...  This probably exists elsewhere much better.
 
 **Activity Status & `maintain` Operational Bit (`0x10`) & `busy` Mask (`0x1e`):**
 Per `doc/vole_mask_structure.md`, our `activity` vole mask (`LIBCD_VOLE_MASK.activity`) separates explicit user operations from background library tasks:
@@ -19,11 +46,7 @@ Per `doc/vole_mask_structure.md`, our `activity` vole mask (`LIBCD_VOLE_MASK.act
   3. **Gate & Pathway Verification**: Cryptographic pathway checking (`--lockdown --gate` or hash verification).
 Any behavioral discovery strategy or context check respects `volume_is_busy(mask)`, which checks whether `(mask & (read | write | maintain)) !== 0`.
 
-Whilst all this is happening zig will grow more important... and a separation of concerns, cleanup will take inspiration from consolidate...
-
-- TODO (matt): hooks infrastructure - and locks on main ( even me ) && can't commit to a `src-*.[channel]` without being on the correct branch
-
-The first part of how lkman is going to work...  This probably exists elsewhere much better.
+====
 
 ## PROJECT PHASES & ROADMAP
 
